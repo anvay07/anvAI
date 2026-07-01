@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>anvAI</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="canonical" href="https://anvai.app/chat.html">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Sora:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap&font-display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <a href="index.html" class="logo" aria-label="Back to anvAI home" style="text-decoration:none;">
+          <svg class="logo-icon" width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <rect width="200" height="200" rx="40" fill="#F5E6DC"/>
+            <circle cx="75" cy="100" r="45" fill="#D97756"/>
+            <circle cx="125" cy="100" r="45" fill="#6B3A54"/>
+            <path d="M100,62.58 A45,45 0 0,1 100,137.42 A45,45 0 0,1 100,62.58 Z" fill="#F0B989"/>
+            <circle cx="100" cy="100" r="4.5" fill="#FFF8F0"/>
+          </svg>
+          <span class="logo-name">anv<em>AI</em></span>
+        </a>
+        <div class="header-actions">
+          <span id="sessionId" class="session-id" aria-hidden="true" title="Session ID"></span>
+          <button id="newSessionBtn" class="icon-btn" title="New session" aria-label="New session">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button id="downloadBtn" class="icon-btn" title="Download transcript" aria-label="Download transcript">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Crisis Alert Banner (hidden by default) -->
+      <div id="crisisAlert" class="crisis-alert hidden">
+        <div class="crisis-content">
+          <h3>We Care About Your Safety</h3>
+          <p id="crisisMessage"></p>
+          <div class="crisis-resources">
+            <a href="tel:988" class="btn-crisis">📞 Call 988 (US)</a>
+            <a href="https://www.crisistextline.org/" target="_blank" class="btn-crisis">💬 Crisis Text Line</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Chat Interface -->
+      <main class="main">
+        <!-- Chat Messages Container -->
+        <div class="chat-container">
+          <div id="messages" class="messages" aria-live="polite" aria-label="Conversation" role="log">
+            <div class="message-group welcome">
+              <div class="message assistant">
+                <div class="message-avatar">
+                  <svg width="34" height="34" viewBox="-2 -2 44 44" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="20" fill="#F5E6DC"/>
+                    <polyline points="3,20 8,20 11,11 15,29 18.5,20 21,15.5 23,20 37,20" fill="none" stroke="#D97756" stroke-opacity="0.18" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <polyline points="3,20 8,20 11,11 15,29 18.5,20 21,15.5 23,20 37,20" fill="none" stroke="#D97756" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100">
+                      <animate attributeName="stroke-dashoffset" from="100" to="-100" dur="1.6s" repeatCount="indefinite"/>
+                    </polyline>
+                    <circle cx="21" cy="15.5" r="1.5" fill="#6B3A54"/>
+                  </svg>
+                </div>
+                <div class="message-content">
+                  <p>
+                    Hi there. I'm anvAI. I'm here to listen without judgment and help you explore what you're feeling.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Emotional State Indicator (compact) -->
+          <div id="emotionalState" class="emotional-state hidden">
+            <div id="emotionsList" class="emotions-list"></div>
+            <div class="intensity-bar">
+              <span class="intensity-label">Intensity <span id="intensityValue">0</span>/10</span>
+              <div class="intensity-progress">
+                <div id="intensityFill" class="intensity-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-section">
+          <div class="input-wrapper">
+            <textarea
+              id="userInput"
+              class="input-field"
+              placeholder="Message anvAI..."
+              aria-label="Message input"
+              rows="1"
+            ></textarea>
+            <button id="sendBtn" class="send-btn" aria-label="Send message">
+              <span class="send-icon" aria-hidden="true">↑</span>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Screen-reader status announcer (invisible) -->
+    <div id="srStatus" role="status" aria-live="polite" aria-atomic="true"
+         style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;"></div>
+
+    <!-- Privacy footer -->
+    <footer style="text-align:center;padding:10px 16px;font-size:11px;color:var(--rose-grey);opacity:0.5;flex-shrink:0;background:var(--ink);">
+      <a href="privacy.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Privacy Policy</a>
+      &nbsp;·&nbsp; anvAI is not a substitute for professional mental health care.
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+# Claude Code session data
+.claude/
+
+# Environment — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+server_err.log
+
+# Runtime
+.DS_Store
+Thumbs.db
+
+# Dev artifacts (do not ship)
+anvai-website.html
+anvai_favicon_appicon.html
+claude-code-brief-anvai-fix.md
+AnvAI_EQ_Upgrade_Specification.docx
+anvai_logo_concept.png

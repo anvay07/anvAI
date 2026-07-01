@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — anvAI</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Sora:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C0F17; --ink-card:#33202B; --terracotta:#DD7A57;
+    --blush:#F3C08E; --cream:#F6ECE1; --rose-grey:#B79A9B;
+    --line:rgba(246,236,225,0.12);
+    --font-display:'Fraunces',serif; --font-body:'Sora',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{ background:var(--ink); color:var(--cream); font-family:var(--font-body); line-height:1.7; }
+  a{ color:var(--terracotta); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 40px; border-bottom:1px solid var(--line);
+    background:rgba(28,15,23,0.92); backdrop-filter:blur(14px);
+    position:sticky; top:0; z-index:50;
+  }
+  .nav-mark{
+    display:flex; align-items:center; gap:10px;
+    font-family:var(--font-display); font-size:18px; color:var(--cream);
+    text-decoration:none;
+  }
+  .nav-mark svg{ width:24px; height:24px; }
+  .nav-back{
+    font-size:13px; color:var(--rose-grey);
+    display:flex; align-items:center; gap:6px;
+    transition:color .2s;
+  }
+  .nav-back:hover{ color:var(--cream); text-decoration:none; }
+
+  .content{
+    max-width:720px; margin:0 auto;
+    padding:72px 32px 120px;
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--terracotta); margin-bottom:16px;
+  }
+  h1{
+    font-family:var(--font-display); font-weight:400;
+    font-size:clamp(32px,5vw,48px); letter-spacing:-0.01em;
+    margin-bottom:12px; line-height:1.1;
+  }
+  .updated{
+    font-size:12.5px; color:var(--rose-grey);
+    font-family:var(--font-mono); margin-bottom:56px;
+  }
+  h2{
+    font-family:var(--font-display); font-weight:500; font-size:20px;
+    margin:48px 0 14px; color:var(--cream);
+  }
+  p{ color:var(--rose-grey); font-size:15.5px; margin-bottom:16px; }
+  p strong{ color:var(--cream); font-weight:500; }
+  ul{ list-style:none; margin:0 0 16px; display:flex; flex-direction:column; gap:8px; }
+  ul li{
+    color:var(--rose-grey); font-size:15.5px; padding-left:20px; position:relative;
+  }
+  ul li::before{
+    content:'–'; position:absolute; left:0; color:var(--terracotta);
+  }
+  .highlight-box{
+    background:var(--ink-card); border:1px solid var(--line);
+    border-left:3px solid var(--terracotta);
+    border-radius:12px; padding:20px 24px; margin:32px 0;
+  }
+  .highlight-box p{ margin-bottom:0; }
+  hr{ border:none; border-top:1px solid var(--line); margin:40px 0; }
+  footer{
+    text-align:center; padding:32px; border-top:1px solid var(--line);
+    font-size:12px; color:var(--rose-grey); opacity:0.6;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-mark">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="75" cy="100" r="55" fill="#DD7A57"/>
+      <circle cx="125" cy="100" r="55" fill="#8A4E6C"/>
+      <path d="M100,52.58 A55,55 0 0,1 100,147.42 A55,55 0 0,1 100,52.58 Z" fill="#F3C08E"/>
+      <circle cx="100" cy="100" r="7" fill="#F6ECE1"/>
+    </svg>
+    anvAI
+  </a>
+  <a href="index.html" class="nav-back">
+    ← Back to home
+  </a>
+</nav>
+
+<div class="content">
+  <p class="eyebrow">Legal</p>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: July 1, 2026</p>
+
+  <div class="highlight-box">
+    <p><strong>The short version:</strong> We don't sell your data, we don't store your conversations after your session ends, and we will never share what you tell anvAI with anyone. Your conversations are yours.</p>
+  </div>
+
+  <h2>1. What anvAI is</h2>
+  <p>anvAI is an emotional support companion — not a therapist, not a medical service, and not a crisis line. It is a conversational tool designed to help you process feelings in a private, low-stakes space. It is <strong>not a replacement for professional mental health care.</strong></p>
+
+  <h2>2. What we collect</h2>
+  <p>We collect only what is necessary to run the service:</p>
+  <ul>
+    <li><strong>Conversation content</strong> — messages you send are forwarded to our AI model in real time to generate a response. We do not persistently store message content after your session ends.</li>
+    <li><strong>Session identifiers</strong> — a temporary, randomly generated ID is created for each conversation. It is not linked to your identity.</li>
+    <li><strong>Technical logs</strong> — standard server logs (timestamps, response codes, error traces) retained for up to 7 days for debugging purposes only.</li>
+  </ul>
+  <p>We do <strong>not</strong> collect:</p>
+  <ul>
+    <li>Your name, email address, or any identifying information</li>
+    <li>Device fingerprints or tracking pixels</li>
+    <li>Location data</li>
+    <li>Cookies beyond what is strictly necessary for the session</li>
+  </ul>
+
+  <h2>3. How your data is used</h2>
+  <p>Your conversation is used for one purpose only: generating a response from the AI model in the current session. We do not use it to train models, build profiles, or target advertising.</p>
+
+  <h2>4. Third-party AI processing</h2>
+  <p>Messages are processed by a third-party AI model via an API. The provider processes messages in transit to generate responses. We have selected providers whose data processing agreements prohibit training on user data. Please review their policies for full detail.</p>
+
+  <h2>5. Crisis situations</h2>
+  <p>If anvAI detects language that may indicate a safety risk, it surfaces crisis resources (phone numbers, text lines). <strong>We do not automatically alert anyone or contact emergency services.</strong> If you are in immediate danger, please contact emergency services directly.</p>
+
+  <h2>6. Data retention</h2>
+  <p>Conversation content is held in memory for the duration of your active session only. When you start a new session or close the tab, the previous conversation is not retained on our servers. Technical logs are deleted after 7 days.</p>
+
+  <h2>7. Your rights</h2>
+  <p>Since we do not store personally identifiable information, most standard data rights (access, erasure, portability) are satisfied by design — there is no record of you to delete. If you have questions, contact us at the address below.</p>
+
+  <h2>8. Children</h2>
+  <p>anvAI is not intended for users under 13. If you are under 18, please use this service with the knowledge of a parent or guardian.</p>
+
+  <h2>9. Changes to this policy</h2>
+  <p>We may update this policy. The "last updated" date at the top will reflect any changes. Continued use of anvAI after changes constitutes acceptance of the updated policy.</p>
+
+  <h2>10. Contact</h2>
+  <p>Questions about this policy: <a href="mailto:houseofarchdes@gmail.com">houseofarchdes@gmail.com</a></p>
+
+  <hr>
+  <p style="font-size:13px;">anvAI is a bridge to care, not a replacement for it.</p>
+</div>
+
+<footer>© 2026 anvAI. All rights reserved.</footer>
+
+</body>
+</html>

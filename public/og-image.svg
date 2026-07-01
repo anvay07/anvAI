@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#1C0F17"/>
+  <!-- subtle radial glow -->
+  <radialGradient id="glow" cx="50%" cy="50%" r="55%">
+    <stop offset="0%"  stop-color="#DD7A57" stop-opacity="0.22"/>
+    <stop offset="50%" stop-color="#8A4E6C" stop-opacity="0.10"/>
+    <stop offset="100%" stop-color="#1C0F17" stop-opacity="0"/>
+  </radialGradient>
+  <ellipse cx="600" cy="315" rx="480" ry="320" fill="url(#glow)"/>
+
+  <!-- logo mark -->
+  <g transform="translate(476, 170)">
+    <circle cx="37" cy="50" r="34" fill="#DD7A57"/>
+    <circle cx="75" cy="50" r="34" fill="#8A4E6C"/>
+    <path d="M56,18.7 A34,34 0 0,1 56,81.3 A34,34 0 0,1 56,18.7 Z" fill="#F3C08E"/>
+    <circle cx="56" cy="50" r="5" fill="#F6ECE1"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="600" y="300" text-anchor="middle"
+        font-family="Georgia, serif" font-size="88" font-weight="400"
+        fill="#F6ECE1" letter-spacing="-2">anvAI</text>
+
+  <!-- tagline -->
+  <text x="600" y="370" text-anchor="middle"
+        font-family="Georgia, serif" font-size="28" font-weight="400"
+        fill="#B79A9B" font-style="italic">somewhere to put down what you're carrying</text>
+
+  <!-- bottom bar -->
+  <rect x="0" y="600" width="1200" height="30" fill="#33202B"/>
+  <text x="600" y="621" text-anchor="middle"
+        font-family="Arial, sans-serif" font-size="13"
+        fill="#B79A9B" letter-spacing="1">anvai.app · free · private · no account needed</text>
+</svg>

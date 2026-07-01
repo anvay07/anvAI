@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>anvAI — somewhere to put down what you're carrying</title>
+<meta name="description" content="anvAI listens without judgment, notices what you're feeling, and stays with you until you're ready to move. A bridge to care, not a replacement for it.">
+
+<!-- Open Graph -->
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="anvAI — somewhere to put down what you're carrying">
+<meta property="og:description" content="anvAI listens without judgment, notices what you're feeling, and stays with you until you're ready to move. A bridge to care, not a replacement for it.">
+<meta property="og:image"       content="/og-image.svg">
+<meta property="og:image:width"  content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name"   content="anvAI">
+
+<!-- Twitter / X -->
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="anvAI — somewhere to put down what you're carrying">
+<meta name="twitter:description" content="A space that listens back. No judgment, no advice dumps — just presence.">
+<meta name="twitter:image"       content="/og-image.png">
+
+<!-- WhatsApp / iMessage previews use og: tags above -->
+<meta name="theme-color" content="#1C0F17">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://fonts.gstatic.com">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
+<link rel="canonical" href="https://anvai.app/">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Sora:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400&display=swap&font-display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C0F17;
+    --ink-soft:#2A1A24;
+    --ink-card:#33202B;
+    --terracotta:#DD7A57;
+    --terracotta-dim:#B9603F;
+    --plum:#8A4E6C;
+    --blush:#F3C08E;
+    --cream:#F6ECE1;
+    --rose-grey:#B79A9B;
+    --line: rgba(246,236,225,0.12);
+    --font-display:'Fraunces', serif;
+    --font-body:'Sora', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--ink);
+    color:var(--cream);
+    font-family:var(--font-body);
+    font-weight:400;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+
+  a{ color:inherit; text-decoration:none; }
+
+  .skip-link{
+    position:absolute; top:-999px; left:16px;
+    background:var(--terracotta); color:var(--ink);
+    padding:10px 18px; border-radius:8px; font-weight:600; font-size:14px;
+    z-index:999; text-decoration:none;
+    transition:top .2s ease;
+  }
+  .skip-link:focus{ top:12px; }
+
+  ::selection{ background:var(--terracotta); color:var(--ink); }
+
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 32px; }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:26px 40px;
+    background:rgba(28,15,23,0.82);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(246,236,225,0.06);
+    transition:padding .35s cubic-bezier(.2,.8,.2,1);
+  }
+  nav.scrolled{
+    padding:14px 40px;
+  }
+  nav.scrolled .nav-mark{ font-size:16px; }
+  nav.scrolled .nav-mark svg{ width:20px; height:20px; }
+  .nav-mark, .nav-mark svg{ transition:font-size .35s ease, width .35s ease, height .35s ease; }
+  @media(max-width:720px){ nav.scrolled{ padding:12px 24px; } }
+  .nav-mark{
+    display:flex; align-items:center; gap:10px;
+    font-family:var(--font-display); font-size:19px; font-weight:500; letter-spacing:0.01em;
+  }
+  .nav-mark svg{ width:26px; height:26px; }
+  .nav-links{ display:flex; align-items:center; gap:36px; font-size:14px; color:var(--rose-grey); }
+  .nav-links a{ transition:color .25s ease; }
+  .nav-links a:hover{ color:var(--cream); }
+  .nav-cta{
+    font-family:var(--font-body); font-size:14px; font-weight:500;
+    color:var(--ink); background:var(--cream);
+    padding:10px 20px; border-radius:100px;
+    transition:transform .25s ease, background .25s ease;
+    display:inline-block;
+  }
+  .nav-cta:hover{ background:var(--blush); }
+  @media (max-width:720px){ .nav-links{ display:none; } nav{ padding:20px 24px; } }
+
+  /* ---------- HAMBURGER ---------- */
+  .nav-hamburger{
+    display:none;
+    flex-direction:column; justify-content:center; align-items:center; gap:5px;
+    width:36px; height:36px; background:none; border:none; cursor:pointer;
+    padding:4px; border-radius:8px;
+    transition:background .2s ease;
+  }
+  .nav-hamburger:hover{ background:var(--ink-card); }
+  .nav-hamburger span{
+    display:block; width:20px; height:1.5px; background:var(--cream); border-radius:2px;
+    transition:transform .3s ease, opacity .3s ease;
+    transform-origin:center;
+  }
+  nav.menu-open .nav-hamburger span:nth-child(1){ transform:translateY(6.5px) rotate(45deg); }
+  nav.menu-open .nav-hamburger span:nth-child(2){ opacity:0; transform:scaleX(0); }
+  nav.menu-open .nav-hamburger span:nth-child(3){ transform:translateY(-6.5px) rotate(-45deg); }
+  @media (max-width:720px){ .nav-hamburger{ display:flex; } }
+
+  /* ---------- MOBILE DRAWER ---------- */
+  .mobile-drawer{
+    display:none;
+    position:fixed; top:0; left:0; right:0; bottom:0; z-index:49;
+    background:rgba(28,15,23,0.97);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    flex-direction:column; align-items:center; justify-content:center; gap:0;
+    opacity:0; pointer-events:none;
+    transition:opacity .3s ease;
+  }
+  .mobile-drawer.open{ opacity:1; pointer-events:auto; }
+  @media (max-width:720px){ .mobile-drawer{ display:flex; } }
+  .mobile-drawer a{
+    font-family:var(--font-display); font-size:clamp(28px,8vw,40px); font-weight:400;
+    color:var(--rose-grey); letter-spacing:-0.01em;
+    padding:18px 0; text-align:center; width:100%;
+    border-bottom:1px solid var(--line);
+    transition:color .2s ease;
+  }
+  .mobile-drawer a:first-child{ border-top:1px solid var(--line); }
+  .mobile-drawer a:hover{ color:var(--cream); }
+  .mobile-drawer .mobile-cta{
+    margin-top:36px; font-family:var(--font-body); font-size:16px; font-weight:500;
+    color:var(--ink); background:var(--terracotta);
+    padding:16px 40px; border-radius:100px; border:none;
+    transition:background .25s ease;
+  }
+  .mobile-drawer .mobile-cta:hover{ background:var(--blush); }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:100px 24px 130px;
+    overflow:hidden;
+  }
+  .orb-stage{
+    position:relative;
+    width:min(420px, 64vw); height:min(420px, 64vw);
+    margin-bottom:8px;
+  }
+  .orb-glow{
+    position:absolute; inset:-15%;
+    background:radial-gradient(circle at 50% 45%, rgba(221,122,87,0.28), rgba(138,78,108,0.16) 45%, transparent 72%);
+    filter:blur(30px);
+    pointer-events:none;
+  }
+  #orb-canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .orb-hint{
+    position:absolute; bottom:10%; left:50%; transform:translateX(-50%);
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--cream); opacity:0; pointer-events:none;
+    transition:opacity .6s ease;
+    white-space:nowrap;
+  }
+  .orb-hint::before{
+    content:''; display:inline-block; width:16px; height:1px;
+    background:var(--cream); vertical-align:middle; margin-right:8px; opacity:0.5;
+  }
+  .orb-hint::after{
+    content:''; display:inline-block; width:16px; height:1px;
+    background:var(--cream); vertical-align:middle; margin-left:8px; opacity:0.5;
+  }
+  .orb-hint.visible{ opacity:0.45; animation:hintpulse 3s ease-in-out infinite; }
+  @keyframes hintpulse{ 0%,100%{ opacity:0.3; } 50%{ opacity:0.6; } }
+  .orb-fallback{
+    position:absolute; inset:12%; border-radius:50%;
+    background:radial-gradient(circle at 38% 32%, var(--blush), var(--terracotta) 45%, var(--plum) 100%);
+    display:none;
+  }
+  .no-webgl .orb-fallback{ display:block; }
+  .no-webgl #orb-canvas{ display:none; }
+
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--rose-grey); margin-bottom:22px; opacity:0.85;
+  }
+  h1.hero-title{
+    font-family:var(--font-display);
+    font-weight:400;
+    font-size:clamp(34px, 5.4vw, 66px);
+    line-height:1.08;
+    max-width:15ch;
+    letter-spacing:-0.01em;
+  }
+  h1.hero-title em{ font-style:italic; color:var(--blush); font-weight:400; }
+  .hero-sub{
+    margin-top:26px;
+    max-width:52ch;
+    font-size:17px;
+    color:var(--rose-grey);
+    line-height:1.7;
+  }
+  .hero-actions{ margin-top:38px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .btn-primary{
+    position:relative;
+    font-family:var(--font-body); font-weight:500; font-size:15.5px;
+    background:var(--terracotta); color:var(--ink);
+    padding:16px 34px; border-radius:100px;
+    display:inline-flex; align-items:center; gap:10px;
+    transition:transform .35s cubic-bezier(.2,.9,.3,1), background .3s ease;
+    will-change:transform;
+  }
+  .btn-primary:hover{ background:var(--blush); }
+  .btn-primary svg{ width:16px; height:16px; transition:transform .3s ease; }
+  .btn-primary:hover svg{ transform:translateX(3px); }
+  .hero-fineprint{ font-size:12.5px; color:var(--rose-grey); opacity:0.75; letter-spacing:0.01em; }
+
+  .scroll-cue{
+    position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    color:var(--rose-grey); font-size:11px; font-family:var(--font-mono); letter-spacing:0.1em; text-transform:uppercase;
+    opacity:0.6;
+  }
+  .scroll-cue .line{ width:1px; height:34px; background:linear-gradient(var(--rose-grey), transparent); animation:scrollpulse 2.2s ease-in-out infinite; }
+  @keyframes scrollpulse{ 0%,100%{ opacity:0.3; } 50%{ opacity:0.9; } }
+
+  /* ---------- REVEAL ---------- */
+  .reveal{ opacity:0; transform:translateY(28px); transition:opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
+  .reveal.in-view{ opacity:1; transform:translateY(0); }
+
+  /* ---------- VIGNETTES ---------- */
+  .vignettes{ padding:120px 0 60px; position:relative; }
+  .section-label{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--terracotta); margin-bottom:18px; display:block;
+  }
+  .section-head{ font-family:var(--font-display); font-size:clamp(26px,3.4vw,38px); font-weight:400; max-width:20ch; margin-bottom:80px; letter-spacing:-0.01em; }
+
+  .vignette{
+    display:grid; grid-template-columns:0.9fr 1.4fr; gap:60px; align-items:center;
+    padding:56px 0; border-top:1px solid var(--line);
+  }
+  .vignette:last-child{ border-bottom:1px solid var(--line); }
+  .vignette:nth-child(even){ direction:rtl; }
+  .vignette:nth-child(even) > *{ direction:ltr; }
+  .v-mark{ display:flex; align-items:center; justify-content:center; }
+  .v-mark .v-shape{
+    width:104px; height:104px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .v-shape svg{ width:100%; height:100%; }
+  .v-title{ font-family:var(--font-display); font-size:26px; font-weight:400; margin-bottom:14px; letter-spacing:-0.005em; }
+  .v-body{ color:var(--rose-grey); font-size:15.5px; max-width:52ch; line-height:1.75; }
+  @media (max-width:820px){
+    .vignette{ grid-template-columns:1fr; gap:22px; direction:ltr !important; text-align:left; }
+    .vignette > *{ direction:ltr !important; }
+    .v-mark{ justify-content:flex-start; }
+    .v-mark .v-shape{ width:64px; height:64px; }
+  }
+
+  /* ---------- GROUNDING ---------- */
+  .grounding{ padding:120px 0; }
+  .grounding-card{
+    background:var(--ink-card);
+    border:1px solid var(--line);
+    border-radius:28px;
+    padding:clamp(36px, 6vw, 76px);
+    display:grid; grid-template-columns:1.1fr 1fr; gap:56px;
+  }
+  .lineage-list{ list-style:none; margin-top:26px; display:flex; flex-direction:column; gap:14px; }
+  .lineage-list li{
+    display:flex; align-items:baseline; gap:14px;
+    font-size:15px; color:var(--cream); padding-bottom:14px; border-bottom:1px solid var(--line);
+  }
+  .lineage-list li:last-child{ border-bottom:none; padding-bottom:0; }
+  .lineage-list .li-name{ font-family:var(--font-display); font-size:18px; min-width:150px; }
+  .lineage-list .li-desc{ color:var(--rose-grey); font-size:14px; }
+
+  .disclaimer{
+    display:flex; flex-direction:column; justify-content:center;
+    border-left:1px solid var(--line); padding-left:56px;
+  }
+  .disclaimer .section-label{ color:var(--blush); }
+  .disclaimer p{ color:var(--rose-grey); font-size:15px; line-height:1.75; margin-top:16px; }
+  .disclaimer strong{ color:var(--cream); font-weight:500; }
+  @media (max-width:820px){
+    .grounding-card{ grid-template-columns:1fr; }
+    .disclaimer{ border-left:none; padding-left:0; border-top:1px solid var(--line); padding-top:32px; }
+  }
+
+  /* ---------- CLOSING CTA ---------- */
+  .closing{
+    padding:150px 24px 160px; text-align:center; position:relative;
+  }
+  .closing-title{
+    font-family:var(--font-display); font-weight:400; font-size:clamp(28px,4.4vw,50px);
+    max-width:16ch; margin:0 auto 34px; letter-spacing:-0.01em;
+  }
+  .closing-title em{ font-style:italic; color:var(--terracotta); }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:52px 0 40px;
+  }
+  .footer-row{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:28px; }
+  .footer-mark{ font-family:var(--font-display); font-size:18px; }
+  .footer-tag{ color:var(--rose-grey); font-size:13.5px; margin-top:8px; max-width:34ch; }
+  .footer-links{ display:flex; gap:32px; font-size:13.5px; color:var(--rose-grey); flex-wrap:wrap; }
+  .footer-links a:hover{ color:var(--cream); }
+  .footer-bottom{ margin-top:40px; font-size:12px; color:var(--rose-grey); opacity:0.6; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+
+  /* ---------- CRISIS PILL ---------- */
+  .crisis-pill{
+    position:fixed; bottom:max(22px, env(safe-area-inset-bottom, 22px)); right:max(22px, env(safe-area-inset-right, 22px)); z-index:100;
+    display:flex; align-items:center; gap:9px;
+    background:var(--ink-card); border:1px solid var(--line);
+    padding:12px 18px 12px 14px; border-radius:100px;
+    font-size:13px; color:var(--cream); font-family:var(--font-body);
+    cursor:pointer; box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    transition:background .25s ease, transform .2s ease;
+    outline:none;
+  }
+  .crisis-pill:focus-visible{
+    box-shadow:0 0 0 3px var(--terracotta), 0 10px 30px rgba(0,0,0,0.35);
+  }
+  .crisis-pill:hover{ background:#3c2530; }
+  .crisis-dot{
+    width:8px; height:8px; border-radius:50%; background:var(--terracotta);
+    animation:heartbeat 2.4s ease-in-out infinite;
+  }
+  @keyframes heartbeat{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.5); opacity:0.6; } }
+
+  .crisis-panel{
+    position:fixed; bottom:78px; right:22px; z-index:100;
+    width:min(340px, calc(100vw - 44px));
+    background:var(--ink-card); border:1px solid var(--line);
+    border-radius:18px; padding:22px 22px 18px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.45);
+    opacity:0; pointer-events:none; transform:translateY(12px);
+    transition:opacity .28s ease, transform .28s ease;
+  }
+  .crisis-panel.open{ opacity:1; pointer-events:auto; transform:translateY(0); }
+  .crisis-panel h4{ font-family:var(--font-display); font-weight:500; font-size:16px; margin-bottom:4px; }
+  .crisis-panel p.ck{ font-size:12.5px; color:var(--rose-grey); margin-bottom:16px; }
+  .crisis-region{ margin-bottom:14px; }
+  .crisis-region .r-name{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--terracotta); margin-bottom:6px; }
+  .crisis-region .r-item{ font-size:13px; color:var(--cream); line-height:1.6; }
+  .crisis-close{
+    position:absolute; top:16px; right:16px; width:22px; height:22px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--rose-grey); cursor:pointer; border-radius:50%;
+    background:none; border:none; padding:0;
+    transition:background .2s ease, color .2s ease;
+  }
+  .crisis-close:hover{ background:var(--ink-soft); color:var(--cream); }
+  .crisis-close:focus-visible{ outline:2px solid var(--terracotta); outline-offset:2px; }
+
+  /* ---------- HELPLINES ---------- */
+  .helplines{
+    padding:100px 24px 80px;
+    border-top:1px solid var(--line);
+  }
+  .helplines-header{
+    text-align:center; margin-bottom:56px;
+  }
+  .helplines-title{
+    font-family:var(--font-display); font-weight:400;
+    font-size:clamp(22px,3.2vw,34px); letter-spacing:-0.01em; margin-bottom:10px;
+  }
+  .helplines-sub{
+    font-size:14px; color:var(--rose-grey); max-width:46ch; margin:0 auto;
+    line-height:1.65;
+  }
+  .helplines-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    gap:16px;
+    max-width:960px; margin:0 auto;
+  }
+  .hl-card{
+    background:var(--ink-card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 22px;
+    transition:border-color .25s ease;
+  }
+  .hl-card:hover{ border-color:rgba(221,122,87,0.35); }
+  .hl-country{
+    font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--terracotta); margin-bottom:12px;
+  }
+  .hl-lines{ display:flex; flex-direction:column; gap:8px; }
+  .hl-line{ display:flex; flex-direction:column; gap:2px; }
+  .hl-name{ font-size:13px; font-weight:500; color:var(--cream); }
+  .hl-number{
+    font-family:var(--font-mono); font-size:13px; color:var(--blush);
+    letter-spacing:0.03em; text-decoration:none;
+  }
+  a.hl-number:hover{ text-decoration:underline; text-underline-offset:3px; }
+  .hl-note{ font-size:11.5px; color:var(--rose-grey); line-height:1.5; }
+  .helplines-disclaimer{
+    text-align:center; margin-top:44px;
+    font-size:12px; color:var(--rose-grey); opacity:0.6;
+  }
+
+  @media (max-width:520px){
+    .vignettes{ padding:90px 0 30px; }
+    .grounding{ padding:80px 0; }
+    .closing{ padding:100px 24px 120px; }
+    .helplines{ padding:70px 24px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<a href="#feel" class="skip-link">Skip to main content</a>
+
+<nav>
+  <div class="nav-mark">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="75" cy="100" r="55" fill="#DD7A57"/>
+      <circle cx="125" cy="100" r="55" fill="#8A4E6C"/>
+      <path d="M100,52.58 A55,55 0 0,1 100,147.42 A55,55 0 0,1 100,52.58 Z" fill="#F3C08E"/>
+      <circle cx="100" cy="100" r="7" fill="#F6ECE1"/>
+    </svg>
+    anvAI
+  </div>
+  <div class="nav-links">
+    <a href="#feel">how it feels</a>
+    <a href="#grounding">what it's built on</a>
+  </div>
+  <a href="chat.html" class="nav-cta">Start talking</a>
+  <button class="nav-hamburger" id="navHamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-drawer" id="mobileDrawer" role="dialog" aria-modal="true" aria-label="Navigation">
+  <a href="#feel" class="drawer-link">how it feels</a>
+  <a href="#grounding" class="drawer-link">what it's built on</a>
+  <a href="#helplines" class="drawer-link">helplines</a>
+  <a href="chat.html" class="mobile-cta">Start talking</a>
+</div>
+
+<section class="hero">
+  <div class="orb-stage">
+    <div class="orb-glow"></div>
+    <canvas id="orb-canvas" role="img" aria-label="An animated 3D orb that breathes softly — the visual heart of anvAI"></canvas>
+    <div class="orb-fallback"></div>
+    <div class="orb-hint" id="orbHint" aria-hidden="true">tap to begin</div>
+  </div>
+
+  <span class="eyebrow">a space that listens back</span>
+  <h1 class="hero-title">Somewhere to put down<br>what you're <em>carrying.</em></h1>
+  <p class="hero-sub">anvAI listens without judgment, notices what you're feeling before you say it, and stays with you until you're ready to move — not a replacement for therapy, but a hand to hold until you find one.</p>
+
+  <div class="hero-actions">
+    <a href="chat.html" class="btn-primary">Start talking
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+    <span class="hero-fineprint">No account to try it · private · free to start</span>
+  </div>
+
+  <div class="scroll-cue"><span>scroll</span><div class="line"></div></div>
+</section>
+
+<section class="vignettes wrap" id="feel">
+  <span class="section-label">How it feels</span>
+  <h2 class="section-head reveal">Three things you'll notice before you notice anvAI noticing you.</h2>
+
+  <div class="vignette reveal">
+    <div class="v-mark"><div class="v-shape"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="#DD7A57" stroke-width="1.4"/><circle cx="50" cy="50" r="14" fill="#DD7A57" opacity="0.85"/></svg></div></div>
+    <div>
+      <h3 class="v-title">It notices before you say it.</h3>
+      <p class="v-body">When your words get careful — shorter sentences, a joke where a feeling should be — anvAI slows down too. It's reading intensity and defense as much as content, so it doesn't force positivity onto a sentence that's still guarding itself.</p>
+    </div>
+  </div>
+
+  <div class="vignette reveal">
+    <div class="v-mark"><div class="v-shape"><svg viewBox="0 0 100 100"><path d="M50,15 A35,35 0 1,1 49.9,15" fill="none" stroke="#8A4E6C" stroke-width="1.4"/><circle cx="50" cy="50" r="6" fill="#8A4E6C"/></svg></div></div>
+    <div>
+      <h3 class="v-title">It knows when to stop talking.</h3>
+      <p class="v-body">No stacked questions, no bulleted advice before your feeling's been heard. One thought at a time, at your pace — sometimes the most useful response is a short one that leaves room for you to keep going.</p>
+    </div>
+  </div>
+
+  <div class="vignette reveal">
+    <div class="v-mark"><div class="v-shape"><svg viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" rx="20" fill="none" stroke="#F3C08E" stroke-width="1.4"/><line x1="50" y1="34" x2="50" y2="58" stroke="#F3C08E" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="68" r="2.6" fill="#F3C08E"/></svg></div></div>
+    <div>
+      <h3 class="v-title">It knows when you need more than it can give.</h3>
+      <p class="v-body">If things get heavier than a conversation can hold, anvAI says so plainly and puts a real person within reach — no walls of text between you and help when you need it fastest.</p>
+    </div>
+  </div>
+</section>
+
+<section class="grounding wrap" id="grounding">
+  <span class="section-label">What it's built on</span>
+  <h2 class="section-head reveal">Not a persona. A practice.</h2>
+
+  <div class="grounding-card reveal">
+    <div>
+      <span class="eyebrow" style="margin-bottom:0;">The lineage it draws from</span>
+      <ul class="lineage-list">
+        <li><span class="li-name">Psychodynamic</span><span class="li-desc">the patterns underneath the pattern</span></li>
+        <li><span class="li-name">CBT</span><span class="li-desc">the thought before the feeling</span></li>
+        <li><span class="li-name">Somatic</span><span class="li-desc">what the body's already telling you</span></li>
+        <li><span class="li-name">ACT</span><span class="li-desc">making room, not forcing change</span></li>
+      </ul>
+    </div>
+    <div class="disclaimer">
+      <span class="section-label">Worth saying plainly</span>
+      <p><strong>anvAI is a bridge, not a replacement.</strong> If you're already working with a therapist, keep going — this is for the hours in between. If you're not, and you're scared to start, this is a lower step onto that ladder, not the top of it.</p>
+      <p>If you're in crisis, anvAI will say so and hand you to a real person immediately. So will the pill in the corner of this page, any time.</p>
+    </div>
+  </div>
+</section>
+
+<section class="closing" id="start">
+  <p class="section-label" style="justify-content:center; display:flex;">Whenever you're ready</p>
+  <h2 class="closing-title reveal">You don't have to carry it<br>until it makes sense <em>first.</em></h2>
+  <a href="chat.html" class="btn-primary">Start talking
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </a>
+</section>
+
+<section class="helplines" id="helplines">
+  <div class="helplines-header reveal">
+    <p class="section-label" style="justify-content:center;display:flex;margin-bottom:14px;">Real help, real people</p>
+    <h2 class="helplines-title">If you need to talk to someone right now</h2>
+    <p class="helplines-sub">These lines are free, confidential, and available 24/7. You don't have to be in crisis to call.</p>
+  </div>
+  <div class="helplines-grid">
+
+    <div class="hl-card reveal">
+      <div class="hl-country">🇺🇸 United States</div>
+      <div class="hl-lines">
+        <div class="hl-line">
+          <span class="hl-name">988 Suicide &amp; Crisis Lifeline</span>
+          <a class="hl-number" href="tel:988">Call or text 988</a>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">Crisis Text Line</span>
+          <span class="hl-number">Text HOME to 741741</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">SAMHSA Helpline</span>
+          <a class="hl-number" href="tel:18006624357">1-800-662-4357</a>
+          <span class="hl-note">Substance use &amp; mental health</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hl-card reveal">
+      <div class="hl-country">🇮🇳 India</div>
+      <div class="hl-lines">
+        <div class="hl-line">
+          <span class="hl-name">iCall</span>
+          <a class="hl-number" href="tel:+919650336262">+91 96 5033 6262</a>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">Vandrevala Foundation</span>
+          <a class="hl-number" href="tel:+919999666555">+91 9999 666 555</a>
+          <span class="hl-note">24/7 multilingual support</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">SNEHI</span>
+          <a class="hl-number" href="tel:+914424640050">+91 44 2464 0050</a>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">iCall (TISS)</span>
+          <a class="hl-number" href="tel:+912225563291">+91 22 2556 3291</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hl-card reveal">
+      <div class="hl-country">🇬🇧 United Kingdom</div>
+      <div class="hl-lines">
+        <div class="hl-line">
+          <span class="hl-name">Samaritans</span>
+          <a class="hl-number" href="tel:116123">116 123</a>
+          <span class="hl-note">Free, 24/7</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">SHOUT Crisis Text Line</span>
+          <span class="hl-number">Text SHOUT to 85258</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">Mind Infoline</span>
+          <a class="hl-number" href="tel:03001233393">0300 123 3393</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hl-card reveal">
+      <div class="hl-country">🇨🇦 Canada</div>
+      <div class="hl-lines">
+        <div class="hl-line">
+          <span class="hl-name">Talk Suicide Canada</span>
+          <a class="hl-number" href="tel:18334564566">1-833-456-4566</a>
+          <span class="hl-note">24/7 · text 45645 (4pm–12am ET)</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">Kids Help Phone</span>
+          <a class="hl-number" href="tel:18006686868">1-800-668-6868</a>
+          <span class="hl-note">Text CONNECT to 686868</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hl-card reveal">
+      <div class="hl-country">🇦🇺 Australia</div>
+      <div class="hl-lines">
+        <div class="hl-line">
+          <span class="hl-name">Lifeline</span>
+          <a class="hl-number" href="tel:131114">13 11 14</a>
+          <span class="hl-note">Text 0477 13 11 14</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">Beyond Blue</span>
+          <a class="hl-number" href="tel:1300224636">1300 22 4636</a>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">Kids Helpline</span>
+          <a class="hl-number" href="tel:1800551800">1800 55 1800</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hl-card reveal">
+      <div class="hl-country">🇩🇪 Germany</div>
+      <div class="hl-lines">
+        <div class="hl-line">
+          <span class="hl-name">Telefonseelsorge</span>
+          <a class="hl-number" href="tel:080011101110">0800 111 0 111</a>
+          <span class="hl-note">Free, 24/7</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">Telefonseelsorge (alt)</span>
+          <a class="hl-number" href="tel:080011101220">0800 111 0 222</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hl-card reveal">
+      <div class="hl-country">🇫🇷 France</div>
+      <div class="hl-lines">
+        <div class="hl-line">
+          <span class="hl-name">3114 — Numéro National</span>
+          <a class="hl-number" href="tel:3114">3114</a>
+          <span class="hl-note">Prévention suicide, 24/7</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">SOS Amitié</span>
+          <a class="hl-number" href="tel:0972394050">09 72 39 40 50</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hl-card reveal">
+      <div class="hl-country">🌍 International</div>
+      <div class="hl-lines">
+        <div class="hl-line">
+          <span class="hl-name">findahelpline.com</span>
+          <span class="hl-note">Directory for 80+ countries</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">befrienders.org</span>
+          <span class="hl-note">Global Samaritans network</span>
+        </div>
+        <div class="hl-line">
+          <span class="hl-name">iasp.info</span>
+          <span class="hl-note">International crisis centre finder</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="helplines-disclaimer">Numbers verified July 2025. If your country isn't listed, <a href="https://findahelpline.com" target="_blank" rel="noopener" style="color:var(--rose-grey);text-decoration:underline;text-underline-offset:3px;">findahelpline.com</a> can help.</p>
+</section>
+
+<footer>
+  <div class="wrap footer-row">
+    <div>
+      <div class="footer-mark">anvAI</div>
+      <p class="footer-tag">A bridge to care, not a replacement for it.</p>
+    </div>
+    <div class="footer-links">
+      <a href="#feel">how it feels</a>
+      <a href="#grounding">what it's built on</a>
+      <a href="#helplines">helplines</a>
+      <a href="https://findahelpline.com" target="_blank" rel="noopener">find a helpline</a>
+      <a href="privacy.html">privacy policy</a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <span>Built with compassion. Deployed responsibly.</span>
+    <span>© 2026 anvAI. All rights reserved.</span>
+  </div>
+</footer>
+
+<button class="crisis-pill" id="crisis-toggle" aria-expanded="false" aria-controls="crisis-panel">
+  <span class="crisis-dot" aria-hidden="true"></span>
+  Need help right now?
+</button>
+<div class="crisis-panel" id="crisis-panel">
+  <button class="crisis-close" id="crisis-close" aria-label="Close help panel">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <h4>You're not alone in this.</h4>
+  <p class="ck">These are real people, available now.</p>
+  <div class="crisis-region">
+    <div class="r-name">United States</div>
+    <div class="r-item">988 Suicide &amp; Crisis Lifeline (call or text)<br>Crisis Text Line — text HOME to 741741</div>
+  </div>
+  <div class="crisis-region">
+    <div class="r-name">India</div>
+    <div class="r-item">iCall — +91 96 5033 6262<br>Vandrevala Foundation — +91 9999 666 555</div>
+  </div>
+  <div class="crisis-region" style="margin-bottom:0;">
+    <div class="r-name">United Kingdom</div>
+    <div class="r-item">Samaritans — 116 123</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- Nav shrink on scroll ---------- */
+  var nav = document.querySelector("nav");
+  window.addEventListener("scroll", function(){
+    nav.classList.toggle("scrolled", window.scrollY > 60);
+  }, { passive: true });
+
+  /* ---------- Mobile hamburger ---------- */
+  var hamburger = document.getElementById("navHamburger");
+  var drawer = document.getElementById("mobileDrawer");
+  function toggleMenu(open){
+    nav.classList.toggle("menu-open", open);
+    drawer.classList.toggle("open", open);
+    hamburger.setAttribute("aria-expanded", open);
+    document.body.style.overflow = open ? "hidden" : "";
+  }
+  hamburger.addEventListener("click", function(){
+    toggleMenu(!drawer.classList.contains("open"));
+  });
+  drawer.querySelectorAll("a").forEach(function(a){
+    a.addEventListener("click", function(){ toggleMenu(false); });
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape") toggleMenu(false);
+  });
+
+  /* Swipe down to close mobile drawer */
+  var swipeStartY = 0;
+  drawer.addEventListener("touchstart", function(e){ swipeStartY = e.touches[0].clientY; }, { passive:true });
+  drawer.addEventListener("touchend", function(e){
+    if(e.changedTouches[0].clientY - swipeStartY > 60) toggleMenu(false);
+  }, { passive:true });
+
+  /* ---------- Scroll reveal ---------- */
+  var revealEls = document.querySelectorAll(".reveal");
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add("in-view"); io.unobserve(e.target); }
+    });
+  }, { threshold:0.18 });
+  revealEls.forEach(function(el){ io.observe(el); });
+
+  /* ---------- Crisis pill ---------- */
+  var pill = document.getElementById("crisis-toggle");
+  var panel = document.getElementById("crisis-panel");
+  var closeBtn = document.getElementById("crisis-close");
+  function togglePanel(open){
+    var isOpen = open !== undefined ? open : !panel.classList.contains("open");
+    panel.classList.toggle("open", isOpen);
+    pill.setAttribute("aria-expanded", String(isOpen));
+  }
+  pill.addEventListener("click", function(){ togglePanel(); });
+  pill.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); togglePanel(); } });
+  closeBtn.addEventListener("click", function(){ togglePanel(false); });
+  closeBtn.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ togglePanel(false); } });
+
+  /* ---------- Magnetic buttons ---------- */
+  document.querySelectorAll(".btn-primary").forEach(function(btn){
+    btn.addEventListener("mousemove", function(e){
+      if(reduceMotion) return;
+      var r = btn.getBoundingClientRect();
+      var x = (e.clientX - r.left - r.width/2) * 0.18;
+      var y = (e.clientY - r.top - r.height/2) * 0.35;
+      btn.style.transform = "translate(" + x + "px," + y + "px)";
+    });
+    btn.addEventListener("mouseleave", function(){ btn.style.transform = "translate(0,0)"; });
+  });
+
+  /* ---------- 3D breathing orb ---------- */
+  var canvas = document.getElementById("orb-canvas");
+  var stage = document.querySelector(".orb-stage");
+
+  var vertexShader = [
+    "uniform float uTime;",
+    "uniform float uAmp;",
+    "varying vec3 vNormal;",
+    "varying float vDisp;",
+
+    "vec3 mod289(vec3 x){return x - floor(x * (1.0/289.0)) * 289.0;}",
+    "vec4 mod289(vec4 x){return x - floor(x*(1.0/289.0))*289.0;}",
+    "vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}",
+    "vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314*r;}",
+
+    "float snoise(vec3 v){",
+    "  const vec2 C = vec2(1.0/6.0, 1.0/3.0);",
+    "  const vec4 D = vec4(0.0,0.5,1.0,2.0);",
+    "  vec3 i = floor(v + dot(v, C.yyy));",
+    "  vec3 x0 = v - i + dot(i, C.xxx);",
+    "  vec3 g = step(x0.yzx, x0.xyz);",
+    "  vec3 l = 1.0 - g;",
+    "  vec3 i1 = min(g.xyz, l.zxy);",
+    "  vec3 i2 = max(g.xyz, l.zxy);",
+    "  vec3 x1 = x0 - i1 + C.xxx;",
+    "  vec3 x2 = x0 - i2 + C.yyy;",
+    "  vec3 x3 = x0 - D.yyy;",
+    "  i = mod289(i);",
+    "  vec4 p = permute(permute(permute(",
+    "      i.z + vec4(0.0, i1.z, i2.z, 1.0))",
+    "    + i.y + vec4(0.0, i1.y, i2.y, 1.0))",
+    "    + i.x + vec4(0.0, i1.x, i2.x, 1.0));",
+    "  float n_ = 0.142857142857;",
+    "  vec3 ns = n_ * D.wyz - D.xzx;",
+    "  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);",
+    "  vec4 x_ = floor(j * ns.z);",
+    "  vec4 y_ = floor(j - 7.0 * x_);",
+    "  vec4 x = x_ *ns.x + ns.yyyy;",
+    "  vec4 y = y_ *ns.x + ns.yyyy;",
+    "  vec4 h = 1.0 - abs(x) - abs(y);",
+    "  vec4 b0 = vec4(x.xy, y.xy);",
+    "  vec4 b1 = vec4(x.zw, y.zw);",
+    "  vec4 s0 = floor(b0)*2.0 + 1.0;",
+    "  vec4 s1 = floor(b1)*2.0 + 1.0;",
+    "  vec4 sh = -step(h, vec4(0.0));",
+    "  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;",
+    "  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;",
+    "  vec3 p0 = vec3(a0.xy, h.x);",
+    "  vec3 p1 = vec3(a0.zw, h.y);",
+    "  vec3 p2 = vec3(a1.xy, h.z);",
+    "  vec3 p3 = vec3(a1.zw, h.w);",
+    "  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));",
+    "  p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;",
+    "  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);",
+    "  m = m*m;",
+    "  return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));",
+    "}",
+
+    "void main(){",
+    "  vNormal = normal;",
+    "  float n = snoise(position * 1.6 + uTime * 0.12);",
+    "  float disp = n * uAmp;",
+    "  vDisp = n;",
+    "  vec3 newPos = position + normal * disp;",
+    "  vec4 mvPosition = modelViewMatrix * vec4(newPos, 1.0);",
+    "  gl_Position = projectionMatrix * mvPosition;",
+    "}"
+  ].join("\n");
+
+  var fragmentShader = [
+    "uniform vec3 uColorA;",
+    "uniform vec3 uColorB;",
+    "uniform vec3 uColorC;",
+    "varying vec3 vNormal;",
+    "varying float vDisp;",
+
+    "void main(){",
+    "  float mixF = smoothstep(-0.5, 0.5, vDisp);",
+    "  vec3 base = mix(uColorA, uColorB, mixF);",
+    "  vec3 light = normalize(vec3(0.4, 0.6, 0.8));",
+    "  float diff = max(dot(normalize(vNormal), light), 0.0);",
+    "  vec3 col = base * (0.55 + diff * 0.65);",
+    "  float rim = pow(1.0 - max(dot(normalize(vNormal), vec3(0.0,0.0,1.0)), 0.0), 2.2);",
+    "  col += uColorC * rim * 0.4;",
+    "  gl_FragColor = vec4(col, 1.0);",
+    "}"
+  ].join("\n");
+
+  function initOrb(){
+    var renderer;
+    try{
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    }catch(err){
+      document.body.classList.add("no-webgl");
+      return;
+    }
+    if(!renderer){ document.body.classList.add("no-webgl"); return; }
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.z = 4.2;
+
+    var geometry = new THREE.SphereGeometry(1.35, 90, 90);
+    var material = new THREE.ShaderMaterial({
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uAmp: { value: 0.16 },
+        uColorA: { value: new THREE.Color(0xDD7A57) },
+        uColorB: { value: new THREE.Color(0x8A4E6C) },
+        uColorC: { value: new THREE.Color(0xF3C08E) }
+      }
+    });
+    var mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    /* pulsating white core dot — rendered on top of the sphere */
+    var dotGeo = new THREE.SphereGeometry(0.14, 24, 24);
+    var dotMat = new THREE.MeshBasicMaterial({
+      color: 0xfff8f0,
+      transparent: true,
+      opacity: 0.95,
+      depthTest: false
+    });
+    var dot = new THREE.Mesh(dotGeo, dotMat);
+    dot.renderOrder = 1;
+
+    /* soft glow halo behind the dot */
+    var haloGeo = new THREE.SphereGeometry(0.13, 24, 24);
+    var haloMat = new THREE.MeshBasicMaterial({
+      color: 0xfff8f0,
+      transparent: true,
+      opacity: 0.18,
+      depthTest: false
+    });
+    var halo = new THREE.Mesh(haloGeo, haloMat);
+    halo.renderOrder = 1;
+
+    scene.add(halo);
+    scene.add(dot);
+
+    function resize(){
+      var size = stage.clientWidth;
+      renderer.setSize(size, size, false);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      camera.aspect = 1;
+      camera.updateProjectionMatrix();
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    var pointer = { x:0, y:0 };
+    window.addEventListener("mousemove", function(e){
+      pointer.x = (e.clientX / window.innerWidth - 0.5);
+      pointer.y = (e.clientY / window.innerHeight - 0.5);
+    });
+
+    /* click on orb → go to chat, with visible hint label */
+    var raycaster = new THREE.Raycaster();
+    var mouse = new THREE.Vector2();
+    canvas.style.cursor = "default";
+
+    /* Show "tap to begin" hint after 3 s */
+    var orbHint = document.getElementById("orbHint");
+    setTimeout(function(){
+      if(orbHint) orbHint.classList.add("visible");
+    }, 3000);
+
+    canvas.addEventListener("click", function(e){
+      var rect = canvas.getBoundingClientRect();
+      mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+      mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      /* hit-test against the full orb mesh, not just the dot */
+      var hits = raycaster.intersectObject(mesh);
+      if(hits.length > 0) window.location.href = "chat.html";
+    });
+
+    canvas.addEventListener("mousemove", function(e){
+      var rect = canvas.getBoundingClientRect();
+      mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+      mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      var onOrb = raycaster.intersectObject(mesh).length > 0;
+      canvas.style.cursor = onOrb ? "pointer" : "default";
+      if(orbHint) orbHint.style.opacity = onOrb ? "1" : "";
+    });
+
+    var clock = new THREE.Clock();
+
+    function tick(){
+      var t = clock.getElapsedTime();
+      material.uniforms.uTime.value = t * 0.8;
+
+      /* breathing — one slow inhale/exhale every ~14s */
+      var breath = Math.sin(t * 0.45) * 0.5 + 0.5;
+      material.uniforms.uAmp.value = 0.10 + breath * 0.08;
+
+      /* gentle scale swell matching the breath */
+      var scale = 1 + Math.sin(t * 0.45) * 0.028;
+      mesh.scale.set(scale, scale, scale);
+
+      /* very slow, deep pulse — ~18 bpm, almost meditative breathing */
+      var drift = Math.sin(t * 0.07) * 0.18 + Math.sin(t * 0.13) * 0.08;
+      var period = 3.3 + drift;
+      var phase = (t % period) / period;
+
+      /* single soft peak — no lub-dub, just a slow swell */
+      var beat = Math.exp(-Math.pow((phase - 0.18) * 8, 2));
+
+      /* dot feels deep inside — always dim, brightens gently on beat */
+      dot.scale.setScalar(1 + beat * 0.35);
+      dotMat.opacity = 0.12 + beat * 0.28;
+
+      halo.visible = false;
+
+      /* slow drift — barely a turn per minute */
+      mesh.rotation.y += 0.0009;
+
+      /* mouse lean: responds but doesn't chase */
+      mesh.rotation.x += (pointer.y * 0.28 - mesh.rotation.x) * 0.018;
+      mesh.rotation.z += (pointer.x * -0.15 - mesh.rotation.z) * 0.018;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+    tick();
+  }
+
+  if(window.WebGLRenderingContext){
+    initOrb();
+  }else{
+    document.body.classList.add("no-webgl");
+  }
+})();
+</script>
+</body>
+</html>
