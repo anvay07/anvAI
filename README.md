@@ -1,544 +1,229 @@
-# AnVAI - Advanced Emotional Intelligence AI Agent
+# anvAI — Emotional Intelligence Companion
 
-A production-ready emotional support AI companion that provides therapeutic conversation with crisis detection and safety protocols.
-
-## 🧠 What is AnVAI?
-
-AnVAI is a deeply trained emotional intelligence companion designed to:
-
-- **Listen without judgment** to people experiencing emotional pain
-- **Provide psychological safety** through therapeutic conversation
-- **Detect and respond to crises** with immediate safety resources
-- **Understand emotional complexity** (trauma, grief, anxiety, depression, etc.)
-- **Bridge the gap** for people afraid to seek professional help initially
-
-### Important Disclaimer
-
-AnVAI is **NOT a replacement for licensed mental health professionals**. It is designed as:
-- A companion for emotional support and exploration
-- A bridge to professional care
-- A safe space when therapy access is limited
-
-If someone is in crisis, AnVAI will detect it and immediately provide emergency resources.
+> A production-ready AI companion that listens without judgment, detects crises, and bridges the gap to professional mental health care.
 
 ---
 
-## 🚀 Quick Start
+## What is anvAI?
 
-### Prerequisites
+anvAI is a conversational emotional support companion built on a therapeutic EQ pipeline. It listens, reflects, and gently guides — without diagnosing, advising, or replacing a licensed therapist.
 
-- Node.js 16+ (download from https://nodejs.org/)
-- npm (comes with Node.js)
-- Anthropic API Key (get from https://console.anthropic.com/)
-
-### Installation
-
-1. **Navigate to the anvai folder:**
-
-```bash
-cd anvai
-```
-
-2. **Install dependencies:**
-
-```bash
-npm install
-```
-
-3. **Create .env file:**
-
-```bash
-cp .env.example .env
-```
-
-4. **Add your Anthropic API key to .env:**
-
-```
-ANTHROPIC_API_KEY=your_api_key_here
-PORT=3000
-NODE_ENV=development
-CRISIS_REGION=US
-```
-
-### Run the Agent
-
-**Development mode (with auto-reload):**
-
-```bash
-npm run dev
-```
-
-**Production mode:**
-
-```bash
-npm start
-```
-
-Open http://localhost:3000 in your browser.
+**It is not a replacement for professional mental health care.** It is a safe, accessible first step for people who aren't ready to reach out yet.
 
 ---
 
-## 📁 Project Structure
+## Features
+
+- **Emotionally intelligent responses** — EQ guardrail pipeline ensures every reply is warm, concise, and non-prescriptive
+- **Vent mode** — detects when a user just wants to be heard, suppresses advice
+- **Crisis detection** — multi-level severity analysis; immediately surfaces helpline numbers for at-risk users
+- **Emotional state tracker** — identifies primary emotions, intensity, and trajectory in real time
+- **Dark, calming UI** — Three.js breathing orb, Fraunces serif, full mobile support
+- **Accessible** — WCAG 2.1 AA compliant, screen reader support, keyboard navigation, iOS safe-area aware
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | HTML/CSS/JS, Three.js r128 (WebGL orb) |
+| Fonts | Fraunces, Sora, IBM Plex Mono (Google Fonts) |
+| Backend | Node.js, Express |
+| AI | AI Native proxy (Anthropic-compatible), llama-4-maverick-17b-128e |
+| Crisis classifier | claude-3-5-haiku |
+| Process manager | PM2 |
+| Security | helmet, express-rate-limit, crypto session IDs |
+
+---
+
+## Project Structure
 
 ```
 anvai/
-├── server.js                    # Main Express server & API
-├── systemPrompt.js              # Therapeutic system prompt
-├── crisisDetection.js           # Crisis detection & safety
-├── emotionalAnalyzer.js         # Emotional state analysis
-├── package.json                 # Dependencies
-├── .env.example                 # Environment template
-├── README.md                    # This file
+├── server.js                 # Express server — hardened, rate-limited, production-ready
+├── systemPrompt.js           # Core therapeutic system prompt
+├── anvai-eq-improvements.js  # EQ guardrail pipeline + vent mode
+├── crisisDetection.js        # Multi-level crisis detection & resource routing
+├── emotionalAnalyzer.js      # Real-time emotional state analysis
+├── ecosystem.config.js       # PM2 process manager config
+├── test-scenarios.js         # EQ test suite (9 scenarios)
+├── .env.example              # Environment variable template
+├── package.json
 └── public/
-    ├── index.html               # Chat interface
-    ├── styles.css               # UI styling
-    └── script.js                # Frontend logic
+    ├── index.html            # Landing page (Three.js orb, helplines, nav)
+    ├── chat.html             # Chat interface
+    ├── script.js             # Frontend chat logic
+    ├── styles.css            # Dark theme design system
+    ├── privacy.html          # Privacy policy
+    ├── favicon.svg           # SVG favicon
+    ├── og-image.svg          # Social share card
+    ├── robots.txt
+    └── sitemap.xml
 ```
 
 ---
 
-## 🔑 Core Features
+## Getting Started
 
-### 1. Crisis Detection
+### Prerequisites
 
-The agent monitors conversations for crisis indicators:
+- Node.js 18+
+- An [AI Native](https://ainative.studio) API key (Anthropic-compatible proxy)
 
-- **EXTREME**: Explicit suicidal ideation with plan/intent
-- **SEVERE**: Strong suicidal thoughts, self-harm urges
-- **HIGH**: Persistent hopelessness, escalating distress
-- **SELF-HARM**: Active self-injury behavior
-- **HARM-TO-OTHERS**: Thoughts of harming someone
+### Installation
 
-When crisis is detected:
-- Immediate validation of pain
-- Clear, compassionate response
-- Emergency resources (988, Crisis Text Line, etc.)
-- Encouragement to contact emergency services
+```bash
+# 1. Clone the repo
+git clone https://github.com/anvay07/anvAI.git
+cd anvAI
 
-### 2. Emotional Analysis
+# 2. Install dependencies
+npm install
 
-The system analyzes every message for:
-- **Primary emotions**: Abandonment, shame, trauma, depression, anxiety, grief, anger, guilt, hope, confusion
-- **Emotional intensity**: 1-10 scale
-- **Defense mechanisms**: Rationalization, intellectualization, minimization, etc.
-- **Dissociation level**: Numbness/disconnection detection
-- **Emotional trajectory**: Escalating vs. improving
+# 3. Set up environment
+cp .env.example .env
+# Edit .env and add your API key
+```
 
-### 3. Therapeutic Conversation
+### Environment Variables
 
-The agent draws from multiple therapeutic modalities:
+```env
+AINATIVE_API_KEY=sk_your_key_here
+AINATIVE_BASE_URL=https://api.ainative.studio
+PORT=3000
+NODE_ENV=production
+ALLOWED_ORIGINS=https://yourdomain.com
+CRISIS_REGION=US
+```
 
-- **Psychodynamic**: Exploring root causes and patterns
-- **CBT**: Identifying and examining thought patterns
-- **Somatic**: Body-based awareness and regulation
-- **ACT**: Values alignment and committed action
-- **Narrative**: Helping reframe their story
+### Run
 
-### 4. Safety Layer
+```bash
+# Development
+npm run dev
 
-Automatic safety measures:
-- Multi-level crisis detection
-- Real-time resource provision
-- Session-level conversation history (in-memory)
-- Clear limitations stated upfront
-- Regular transparency about being an AI
+# Production (via PM2)
+npm install -g pm2
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup   # run in admin terminal for reboot persistence
+```
+
+Open `http://localhost:3000`
 
 ---
 
-## 📡 API Endpoints
+## API Reference
 
-### POST `/api/session/new`
+### `POST /api/session/new`
+Creates a new conversation session.
 
-Start a new conversation session.
-
-**Response:**
 ```json
+// Response
 {
-  "sessionId": "1719792000000",
-  "message": "Hi there. I'm AnVAI..."
+  "sessionId": "a3f8c2...",   // 48-char cryptographically random hex
+  "message": "Hey. I'm here — what's on your mind?"
 }
 ```
 
-### POST `/api/chat`
+### `POST /api/chat`
+Send a message, get a therapeutic response.
 
-Send a message and receive a therapeutic response.
-
-**Request:**
 ```json
+// Request
 {
-  "sessionId": "1719792000000",
-  "userMessage": "I've been feeling hopeless lately..."
+  "sessionId": "a3f8c2...",
+  "userMessage": "I've been feeling really lost lately."
 }
-```
 
-**Response:**
-```json
+// Response
 {
-  "sessionId": "1719792000000",
-  "response": "That sounds deeply painful...",
+  "response": "That kind of lostness can feel like being adrift without a map...",
   "emotionalState": {
-    "primaryEmotions": [
-      {
-        "emotion": "depression",
-        "description": "Depression & Hopelessness",
-        "confidence": 85
-      }
-    ],
-    "emotionalIntensity": 7,
-    "defenseMechanisms": [],
-    "dissociationLevel": 2,
+    "primaryEmotions": [{ "emotion": "confusion", "confidence": 78 }],
+    "emotionalIntensity": 6,
     "emotionalTrajectory": "stable"
   },
   "isCrisis": false
 }
 ```
 
-### GET `/api/session/:sessionId/summary`
+### `GET /api/session/:sessionId/summary`
+Returns message count and detected themes for a session.
 
-Get session summary and themes.
-
-**Response:**
-```json
-{
-  "sessionId": "1719792000000",
-  "messageCount": 12,
-  "themes": ["abandonment", "shame", "grief"],
-  "emotionalTrajectory": [...],
-  "startTime": "2024-06-30T12:00:00Z"
-}
-```
+### `GET /api/health`
+Returns `{ "status": "ok" }`.
 
 ---
 
-## 🎯 Customization
+## Security
 
-### Change Crisis Resources
-
-Edit `crisisDetection.js`, update the `crisisResources` object:
-
-```javascript
-const crisisResources = {
-  YOUR_REGION: {
-    phone: "+1-XXX-XXX-XXXX",
-    text: "Text to this number",
-    website: "https://...",
-  },
-};
-```
-
-Then update `.env`:
-```
-CRISIS_REGION=YOUR_REGION
-```
-
-### Modify Therapeutic Approach
-
-Edit `systemPrompt.js`:
-- Change therapeutic frameworks
-- Adjust communication style
-- Customize prompts for specific populations
-
-### Add New Emotion Keywords
-
-Edit `emotionalAnalyzer.js`, add to `emotionalVocabulary`:
-
-```javascript
-custom_emotion: {
-  keywords: ["word1", "word2", "word3"],
-  description: "Custom Emotion Description",
-}
-```
+| Measure | Implementation |
+|---|---|
+| Security headers | `helmet` — CSP, HSTS, X-Frame-Options, X-Content-Type-Options |
+| CORS | Origin allowlist via `ALLOWED_ORIGINS` env var |
+| Rate limiting | 200 req/15 min global · 20 msg/min chat · 5 sessions/min |
+| Session IDs | `crypto.randomBytes(24)` — 192-bit entropy |
+| Session TTL | 2-hour expiry + 2,000 session cap with auto-prune |
+| Input validation | Message length capped at 2,000 chars, session ID format enforced |
+| Request timeouts | All AI calls wrapped with `withTimeout()` |
+| Error handling | Internal errors logged server-side only — never exposed to client |
+| Payload cap | `express.json({ limit: "16kb" })` |
+| Graceful shutdown | SIGTERM/SIGINT handlers drain connections cleanly |
 
 ---
 
-## 🔒 Privacy & Security
+## Crisis Detection
 
-### Current Implementation
+Severity levels detected:
 
-- Conversations stored **in-memory only** (cleared on server restart)
-- No data persistence to database
-- No user tracking or logging
-- API key stored locally in `.env` (not in code)
+| Level | Description |
+|---|---|
+| `EXTREME` | Explicit suicidal ideation with plan/intent |
+| `SEVERE` | Strong suicidal thoughts or self-harm urges |
+| `HIGH` | Persistent hopelessness, escalating distress |
+| `SELF-HARM` | Active self-injury behavior |
+| `HARM-TO-OTHERS` | Thoughts of harming someone else |
 
-### Production Recommendations
+When a crisis is detected, anvAI immediately surfaces relevant helplines based on `CRISIS_REGION`.
 
-1. **Add Database**: Use PostgreSQL + Supabase for conversation history
-2. **Encryption**: Encrypt messages at rest and in transit
-3. **HIPAA Compliance**: If handling healthcare data
-4. **Rate Limiting**: Prevent abuse with request limits
-5. **Authentication**: Add user auth (OAuth, JWT)
-6. **Monitoring**: Log crisis incidents for follow-up
-7. **Backups**: Regular backups of conversation data
-
-Example database schema:
-```sql
-CREATE TABLE conversations (
-  id UUID PRIMARY KEY,
-  user_id UUID NOT NULL,
-  session_id TEXT,
-  user_message TEXT,
-  agent_response TEXT,
-  emotional_state JSONB,
-  is_crisis BOOLEAN,
-  created_at TIMESTAMP
-);
-```
+**Supported regions:** US · INDIA · UK · GLOBAL
 
 ---
 
-## 📊 Monitoring & Logging
+## EQ Test Suite
 
-Add crisis monitoring (production):
-
-```javascript
-// In server.js
-if (crisisAnalysis.isCrisis) {
-  // Log to monitoring service
-  console.log(`[CRISIS] Severity: ${crisisAnalysis.severity}`);
-  
-  // Send alert to admin
-  await notifyAdmins({
-    severity: crisisAnalysis.severity,
-    timestamp: new Date(),
-    sessionId: sessionId
-  });
-  
-  // Store for follow-up
-  await saveCrisisEvent({
-    sessionId,
-    severity: crisisAnalysis.severity,
-    message: userMessage
-  });
-}
-```
-
----
-
-## 🧪 Testing
-
-### Test Crisis Detection
-
-Send messages like:
-- "I'm thinking about killing myself"
-- "I want to cut myself tonight"
-- "I'm going to hurt myself"
-
-Verify that:
-- Crisis alert appears
-- Resources display correctly
-- Agent provides compassionate response
-
-### Test Emotional Analysis
-
-Send various messages and check:
-- Correct emotions detected
-- Intensity level accurate
-- Emotional state updates in UI
-
-### Manual Testing Checklist
-
-- [ ] New session starts correctly
-- [ ] Messages send and receive responses
-- [ ] Emotional state displays
-- [ ] Crisis detection triggers appropriately
-- [ ] Download transcript works
-- [ ] UI responsive on mobile
-- [ ] Long conversations work smoothly
-
----
-
-## 🚨 Crisis Protocols
-
-### Your Responsibilities
-
-As the deployer of this agent, you have ethical obligations:
-
-1. **Clear Disclaimers**: Always state this is an AI, not a therapist
-2. **Resource Provision**: Maintain updated crisis resources
-3. **Monitoring**: Review crisis events regularly
-4. **Follow-up**: Consider implementing follow-up protocols
-5. **Legal Compliance**: Understand liability in your jurisdiction
-6. **Accessibility**: Ensure resources are accessible to all
-7. **Updates**: Keep crisis resources current
-
-### Crisis Response Best Practices
-
-- Never minimize: "That must be incredibly painful"
-- Validate emotion: "Your feelings make sense given..."
-- Don't promise solutions: Avoid "Everything will be okay"
-- Encourage professional help: "A therapist could really help with this"
-- Provide immediate resources: Clear, actionable crisis contacts
-- Document everything: For follow-up and improvement
-
----
-
-## 🔧 Troubleshooting
-
-### "Cannot find module '@anthropic-ai/sdk'"
+Run the 9-scenario emotional intelligence test:
 
 ```bash
-npm install @anthropic-ai/sdk
+node test-scenarios.js
 ```
 
-### "ANTHROPIC_API_KEY is not set"
-
-Check your `.env` file:
-```bash
-cat .env
-```
-
-Should contain:
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-### Server won't start on port 3000
-
-The port is in use. Change in `.env`:
-```
-PORT=3001
-```
-
-### Frontend doesn't connect to backend
-
-Check:
-1. Backend is running on correct port
-2. No CORS errors in console
-3. API endpoints match (check `apiUrl` in `script.js`)
-
-### Crisis detection not working
-
-Check `crisisDetection.js`:
-1. Keywords are lowercase
-2. Regex patterns are correct
-3. Severity levels assigned properly
+Tests cover: grief, ambiguous contradiction, anxiety spirals, guilt, vent mode, coping behavior, explicit crisis, figurative language, and deflection/dark humor.
 
 ---
 
-## 📈 Scaling Considerations
+## Crisis Resources
 
-### For Small Scale (1-10 concurrent users)
+**United States:** 988 Suicide & Crisis Lifeline · Crisis Text Line: text HOME to 741741
 
-Current architecture is fine. Just ensure:
-- Monitoring for crashes
-- Regular backups if you add database
-- Crisis alerts working
+**India:** iCall +91-9152987821 · Vandrevala Foundation +91-9999-666-555 · AASRA +91-22-27546669
 
-### For Medium Scale (10-100 users)
+**United Kingdom:** Samaritans 116 123 · CALM 0800 585858
 
-Add:
-- PostgreSQL database
-- Redis for session management
-- Load balancer (nginx)
-- Monitoring (Sentry, LogRocket)
-
-### For Large Scale (100+ users)
-
-Use:
-- Kubernetes deployment
-- Database replication
-- CDN for static files
-- API rate limiting
-- Professional monitoring
-- 24/7 crisis response team
+**International:** findahelpline.com
 
 ---
 
-## 📚 Resources for Developers
+## Disclaimer
 
-### Understanding Emotional Trauma
+anvAI is an AI companion, not a licensed therapist. It does not provide diagnosis, treatment, or medical advice. Always encourage users to seek professional mental health support.
 
-- "The Body Keeps the Score" - Van der Kolk
-- "What Happened to You?" - Bruce Perry
-- "Emotional Intelligence" - Daniel Goleman
-
-### Therapeutic Techniques
-
-- CBT: Beck & Clark
-- ACT: Hayes, Strosahl, Wilson
-- Somatic: Levine, van der Kolk
-- Psychodynamic: Kernberg, Vaillant
-
-### Crisis Intervention
-
-- "Crisis Intervention Team (CIT) Training"
-- "Mental Health First Aid"
-- SAMHSA Crisis Resources
+**Build with compassion. Deploy responsibly.**
 
 ---
 
-## 🤝 Contributing
+## License
 
-### How to Improve AnVAI
-
-1. Test the agent thoroughly
-2. Document issues/improvements
-3. Enhance emotional vocabulary
-4. Improve crisis detection accuracy
-5. Add therapeutic techniques
-6. Better UI/UX for vulnerable users
-7. Multi-language support
-
-### Areas for Development
-
-- [ ] Persistent conversation history
-- [ ] User authentication
-- [ ] Follow-up protocols
-- [ ] Therapist referral system
-- [ ] Progress tracking
-- [ ] Coping strategy library
-- [ ] Community features (peer support)
-- [ ] Mobile app
-- [ ] Multi-language support
-
----
-
-## 📞 Emergency Resources
-
-### Immediate Help
-
-**United States:**
-- 988 Suicide & Crisis Lifeline (call/text)
-- Crisis Text Line: Text HOME to 741741
-- Emergency: 911
-
-**India:**
-- aAsra: +91-22-2754 6669
-- iCall: +91-96 5033 6262
-- Vandrevala Foundation: +91-9999 666 555
-
-**United Kingdom:**
-- Samaritans: 116 123
-- Mind: 0300 123 3393
-
-**Find Your Country:**
-- findahelpline.com
-
----
-
-## 📄 License
-
-This project is provided as-is for educational and support purposes.
-
----
-
-## ⚠️ Final Note
-
-This agent is a **bridge to care, not a replacement for professional help**. Always encourage users to seek licensed mental health support. Your responsibility as a deployer includes:
-
-- Maintaining accuracy of crisis resources
-- Monitoring for system failures
-- Ethical use of emotional data
-- Compliance with local regulations
-- Transparency about limitations
-
-Build with compassion. Deploy responsibly.
-
-💙
-
----
-
-**Questions? Issues? Improvements?**
-
-This is a living project. Test it, improve it, and help it save lives.
-
+MIT
