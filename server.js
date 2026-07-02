@@ -15,17 +15,15 @@ const eq               = require("./anvai-eq-improvements");
 dotenv.config();
 
 // ============================================
-// VALIDATION — fail fast if config is missing
+// VALIDATION — check environment configuration
 // ============================================
 const REQUIRED_ENV = ["AINATIVE_API_KEY", "AINATIVE_BASE_URL", "MISTRAL_API_KEY"];
 const missingEnv  = REQUIRED_ENV.filter((key) => !process.env[key]);
-if (missingEnv.length) {
-  console.error(`[startup] FATAL: missing env var(s): ${missingEnv.join(", ")}`);
-  // stderr writes are async when stdout/stderr is a pipe (true for Railway's log
-  // collector on Linux) — an immediate process.exit() can kill the process before
-  // this line is flushed, so the log ends up empty. Wait for the write to land first.
-  process.exitCode = 1;
-  process.stderr.write("", () => process.exit());
+const HAS_CONFIG_ERROR = missingEnv.length > 0;
+
+if (HAS_CONFIG_ERROR) {
+  console.error(`[startup] WARNING: missing env var(s): ${missingEnv.join(", ")}`);
+  console.error(`[startup] The server will run in degraded configuration-warning mode.`);
 }
 
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -33,10 +31,12 @@ const IS_PROD = process.env.NODE_ENV === "production";
 // ============================================
 // AI CLIENT
 // ============================================
-const anthropic = new Anthropic({
-  apiKey:  process.env.AINATIVE_API_KEY,
-  baseURL: process.env.AINATIVE_BASE_URL,
-});
+const anthropic = process.env.AINATIVE_API_KEY
+  ? new Anthropic({
+      apiKey:  process.env.AINATIVE_API_KEY,
+      baseURL: process.env.AINATIVE_BASE_URL,
+    })
+  : null;
 
 const MISTRAL_BASE_URL = process.env.MISTRAL_BASE_URL || "https://api.mistral.ai";
 
@@ -186,6 +186,160 @@ const sessionCreateLimiter = rateLimit({
 });
 
 app.use(globalLimiter);
+// ============================================
+// CONFIGURATION ERROR INTERCEPTOR
+// ============================================
+if (HAS_CONFIG_ERROR) {
+  app.use((req, res, next) => {
+    // Keep health check passing for Railway container probes so it doesn't loop-restart
+    if (req.path === "/api/health") {
+      return res.json({ status: "degraded", error: `Missing env vars: ${missingEnv.join(", ")}` });
+    }
+    
+    // For API calls, return JSON error detailing the issue
+    if (req.path.startsWith("/api/")) {
+      return res.status(500).json({
+        error: "Configuration Error",
+        message: `Missing required environment variable(s): ${missingEnv.join(", ")}. Please configure them in your deployment environment (e.g. Railway dashboard).`
+      });
+    }
+    
+    // For normal pages, return a helpful themed instructions page
+    res.status(500).send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>anvAI - Configuration Required</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #f3f4f6;
+      font-family: 'Sora', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 48px;
+      max-width: 540px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      text-align: center;
+    }
+    .logo {
+      font-family: 'Fraunces', serif;
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: #f3f4f6;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #fff, #9ca3af);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 1.75rem;
+      margin-top: 0;
+      color: #f87171;
+      font-weight: 500;
+    }
+    p {
+      line-height: 1.6;
+      color: #9ca3af;
+      font-size: 0.95rem;
+    }
+    .missing-list {
+      background: rgba(248, 113, 113, 0.05);
+      border: 1px solid rgba(248, 113, 113, 0.15);
+      border-radius: 12px;
+      padding: 16px 24px;
+      margin: 28px 0;
+      text-align: left;
+    }
+    .missing-list strong {
+      color: #f87171;
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .missing-list ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #e5e7eb;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.9rem;
+    }
+    .missing-list li {
+      margin: 6px 0;
+    }
+    .instructions {
+      text-align: left;
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-top: 24px;
+    }
+    .instructions ol {
+      padding-left: 20px;
+      margin: 8px 0;
+    }
+    .instructions li {
+      margin: 8px 0;
+    }
+    .note {
+      font-size: 0.8rem;
+      color: #4b5563;
+      margin-top: 36px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">anvAI</div>
+    <h1>Configuration Required</h1>
+    <p>The application has deployed successfully, but required API credentials are missing from the environment variables.</p>
+    
+    <div class="missing-list">
+      <strong>Missing Variables:</strong>
+      <ul>
+        ${missingEnv.map(env => `<li>${env}</li>`).join("")}
+      </ul>
+    </div>
+    
+    <div class="instructions">
+      <p><strong>How to resolve:</strong></p>
+      <ol>
+        <li>Go to your <strong>Railway Project Dashboard</strong>.</li>
+        <li>Select this service and navigate to the <strong>Variables</strong> tab.</li>
+        <li>Add the missing variables listed above with their respective values.</li>
+        <li>Railway will automatically redeploy the service with the new settings.</li>
+      </ol>
+    </div>
+    
+    <div class="note">
+      For security reasons, do not commit your API keys directly to your git repository.
+    </div>
+  </div>
+</body>
+</html>
+    `);
+  });
+}
+
 app.use(express.static("public"));
 
 // ============================================
@@ -492,6 +646,6 @@ process.on("uncaughtException", (err) => {
 // START SERVER
 // ============================================
 const PORT   = parseInt(process.env.PORT, 10) || 3000;
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`anvAI running — port ${PORT} — ${process.env.NODE_ENV}`);
 });
