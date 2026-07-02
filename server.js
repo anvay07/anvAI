@@ -18,12 +18,15 @@ dotenv.config();
 // VALIDATION — fail fast if config is missing
 // ============================================
 const REQUIRED_ENV = ["AINATIVE_API_KEY", "AINATIVE_BASE_URL", "MISTRAL_API_KEY"];
-REQUIRED_ENV.forEach((key) => {
-  if (!process.env[key]) {
-    console.error(`[startup] FATAL: missing env var ${key}`);
-    process.exit(1);
-  }
-});
+const missingEnv  = REQUIRED_ENV.filter((key) => !process.env[key]);
+if (missingEnv.length) {
+  console.error(`[startup] FATAL: missing env var(s): ${missingEnv.join(", ")}`);
+  // stderr writes are async when stdout/stderr is a pipe (true for Railway's log
+  // collector on Linux) — an immediate process.exit() can kill the process before
+  // this line is flushed, so the log ends up empty. Wait for the write to land first.
+  process.exitCode = 1;
+  process.stderr.write("", () => process.exit());
+}
 
 const IS_PROD = process.env.NODE_ENV === "production";
 
@@ -479,7 +482,10 @@ process.on("unhandledRejection", (reason) => {
 
 process.on("uncaughtException", (err) => {
   console.error("[uncaughtException]", err);
-  process.exit(1);
+  // See the startup env-check above — same async-stderr-flush risk applies here,
+  // and this is the one place we can least afford to lose the crash reason.
+  process.exitCode = 1;
+  process.stderr.write("", () => process.exit());
 });
 
 // ============================================
