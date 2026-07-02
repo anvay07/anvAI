@@ -152,8 +152,32 @@ async function analyze(userMessage, conversationHistory = [], llmClient = null) 
   // signal — running this on every single message (e.g. "hi", "thanks")
   // wastes quota for near-zero added safety coverage.
   // ============================================
-  const riskAdjacentPattern =
-    /die|death|dying|hurt|harm|pain|hopeless|empty|numb|alone|worthless|burden|tired of|can'?t (take|do|go on)|give up|no point|end (it|things|this)|disappear|goodbye|won'?t be (here|around)|better off|sorry for everything/i;
+  const riskAdjacentPattern = new RegExp(
+    [
+      "die", "death", "dying",
+      "hurt", "harm", "pain",
+      "hopeless", "empty", "numb", "alone", "worthless", "burden",
+      "tired of",
+      "can'?t (take|do|go on|keep going|keep living)",
+      "give up",
+      "no (point|reason to (live|go on|be here))",
+      "end (it|things|this|my life)",
+      "disappear", "goodbye",
+      "won'?t be (here|around)",
+      "better off",
+      "sorry for everything",
+      "don'?t want to (be (alive|here)|live|exist|keep (living|going))",
+      "not want(?:ed)? to (be alive|live|exist|be here)",
+      "want(?:ed)? (it|everything|this) to (stop|end|be over)",
+      "wish (i|I) (wasn'?t|weren'?t|had never been) (born|here|alive)",
+      "ready to (go|die|leave|not be here)",
+      "done with (life|living|everything)",
+      "no future", "no way out",
+      "not worth (living|it)",
+      "stop existing",
+    ].join("|"),
+    "i"
+  );
 
   if (llmClient && riskAdjacentPattern.test(userMessage)) {
     const semanticResult = await semanticCrisisCheck(
@@ -206,18 +230,13 @@ Be sensitive to indirect language ("I won't need this anymore", "tell them I'm s
       ? `Recent context:\n${recentContext}\n\nLatest message: "${userMessage}"`
       : `Message: "${userMessage}"`;
 
-    const result = await llmClient.anthropic.messages.create({
-      model: llmClient.classifierModel,
-      max_tokens: 150,
-      system: classifierSystemPrompt,
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const raw = result.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim();
+    const raw = (
+      await llmClient.complete({
+        system: classifierSystemPrompt,
+        userPrompt: prompt,
+        maxTokens: 150,
+      })
+    ).trim();
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : { isCrisis: false };
 

@@ -17,7 +17,7 @@ dotenv.config();
 // ============================================
 // VALIDATION — fail fast if config is missing
 // ============================================
-const REQUIRED_ENV = ["AINATIVE_API_KEY", "AINATIVE_BASE_URL"];
+const REQUIRED_ENV = ["AINATIVE_API_KEY", "AINATIVE_BASE_URL", "MISTRAL_API_KEY"];
 REQUIRED_ENV.forEach((key) => {
   if (!process.env[key]) {
     console.error(`[startup] FATAL: missing env var ${key}`);
@@ -35,10 +35,46 @@ const anthropic = new Anthropic({
   baseURL: process.env.AINATIVE_BASE_URL,
 });
 
+const MISTRAL_BASE_URL = process.env.MISTRAL_BASE_URL || "https://api.mistral.ai";
+
+// Mistral's API is OpenAI-style chat completions, not Anthropic's Messages format,
+// so it needs its own request/response shape rather than the Anthropic SDK.
+async function callMistral({ model, system, messages, maxTokens, temperature }) {
+  const res = await fetch(`${MISTRAL_BASE_URL}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization:  `Bearer ${process.env.MISTRAL_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens:  maxTokens,
+      temperature,
+      messages: [{ role: "system", content: system }, ...messages],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Mistral API error ${res.status}: ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? "";
+}
+
 const client = {
   anthropic,
-  mainModel:       "llama-4-maverick-17b-128e",
-  classifierModel: "claude-3-5-haiku",
+  mainModel:       "mistral-large-latest",
+  classifierModel: "mistral-large-latest",
+  // Generic completion used by crisisDetection's semantic classifier —
+  // mistral-small-latest fails with connection-level errors on this account,
+  // so the classifier reuses the proven-reliable main model.
+  complete: ({ system, userPrompt, maxTokens = 150 }) =>
+    callMistral({
+      model:       client.classifierModel,
+      system,
+      messages:    [{ role: "user", content: userPrompt }],
+      maxTokens,
+      temperature: 0.2,
+    }),
 };
 
 // ============================================
@@ -272,17 +308,16 @@ Write in plain prose only. 2-4 sentences max unless the user is clearly asking y
     // GENERATE RESPONSE (with one guardrail retry)
     // ============================================
     async function callModel(sys, msgs) {
-      const result = await withTimeout(
-        anthropic.messages.create({
-          model:      client.mainModel,
-          max_tokens: 800,
+      return withTimeout(
+        callMistral({
+          model:       client.mainModel,
+          system:      sys,
+          messages:    msgs,
+          maxTokens:   800,
           temperature: 0.9,
-          system:     sys,
-          messages:   msgs,
         }),
         15000
       );
-      return result.content.filter((b) => b.type === "text").map((b) => b.text).join("");
     }
 
     function stripMarkdown(raw) {
