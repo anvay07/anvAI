@@ -288,14 +288,14 @@ class anvAIClient {
       this.elements.emotionsList.appendChild(tag);
     });
 
-    // Update intensity bar
+    // Update intensity bar (elements may not exist on all pages)
     const intensity = emotionalState.emotionalIntensity || 0;
     const percentage = (intensity / 10) * 100;
-    this.elements.intensityFill.style.width = `${percentage}%`;
-    this.elements.intensityValue.textContent = intensity;
+    if (this.elements.intensityFill) this.elements.intensityFill.style.width = `${percentage}%`;
+    if (this.elements.intensityValue) this.elements.intensityValue.textContent = intensity;
 
     // Show emotional state section
-    this.elements.emotionalState.classList.remove("hidden");
+    if (this.elements.emotionalState) this.elements.emotionalState.classList.remove("hidden");
   }
 
   // Hide emotional state display
