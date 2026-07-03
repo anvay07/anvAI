@@ -17,7 +17,7 @@ dotenv.config();
 // ============================================
 // VALIDATION — check environment configuration
 // ============================================
-const REQUIRED_ENV = ["AINATIVE_API_KEY", "AINATIVE_BASE_URL", "MISTRAL_API_KEY"];
+const REQUIRED_ENV = ["MISTRAL_API_KEY"];
 const missingEnv  = REQUIRED_ENV.filter((key) => !process.env[key]);
 const HAS_CONFIG_ERROR = missingEnv.length > 0;
 
@@ -204,8 +204,8 @@ if (HAS_CONFIG_ERROR) {
       });
     }
     
-    // For normal pages, return a helpful themed instructions page
-    res.status(500).send(`
+    // For normal pages, return a helpful themed instructions page (uses 200 status to pass Railway health checks)
+    res.status(200).send(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
