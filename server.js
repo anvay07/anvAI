@@ -17,7 +17,7 @@ dotenv.config();
 // ============================================
 // VALIDATION — check environment configuration
 // ============================================
-const REQUIRED_ENV = ["MISTRAL_API_KEY"];
+const REQUIRED_ENV = ["TENSORX_API_KEY"];
 const missingEnv  = REQUIRED_ENV.filter((key) => !process.env[key]);
 const HAS_CONFIG_ERROR = missingEnv.length > 0;
 
@@ -38,16 +38,16 @@ const anthropic = process.env.AINATIVE_API_KEY
     })
   : null;
 
-const MISTRAL_BASE_URL = process.env.MISTRAL_BASE_URL || "https://api.mistral.ai";
+const TENSORX_BASE_URL = process.env.TENSORX_BASE_URL || "https://api.tensorx.ai/v1";
 
-// Mistral's API is OpenAI-style chat completions, not Anthropic's Messages format,
-// so it needs its own request/response shape rather than the Anthropic SDK.
-async function callMistral({ model, system, messages, maxTokens, temperature }) {
-  const res = await fetch(`${MISTRAL_BASE_URL}/v1/chat/completions`, {
+// TensorX is an OpenAI-compatible chat completions router, not Anthropic's
+// Messages format, so it needs its own request/response shape rather than the Anthropic SDK.
+async function callTensorX({ model, system, messages, maxTokens, temperature }) {
+  const res = await fetch(`${TENSORX_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization:  `Bearer ${process.env.MISTRAL_API_KEY}`,
+      Authorization:  `Bearer ${process.env.TENSORX_API_KEY}`,
     },
     body: JSON.stringify({
       model,
@@ -57,7 +57,7 @@ async function callMistral({ model, system, messages, maxTokens, temperature }) 
     }),
   });
   if (!res.ok) {
-    throw new Error(`Mistral API error ${res.status}: ${await res.text()}`);
+    throw new Error(`TensorX API error ${res.status}: ${await res.text()}`);
   }
   const data = await res.json();
   return data.choices?.[0]?.message?.content ?? "";
@@ -65,13 +65,11 @@ async function callMistral({ model, system, messages, maxTokens, temperature }) 
 
 const client = {
   anthropic,
-  mainModel:       "mistral-large-latest",
-  classifierModel: "mistral-large-latest",
-  // Generic completion used by crisisDetection's semantic classifier —
-  // mistral-small-latest fails with connection-level errors on this account,
-  // so the classifier reuses the proven-reliable main model.
+  mainModel:       "deepseek/deepseek-v4-flash",
+  classifierModel: "deepseek/deepseek-v4-flash",
+  // Generic completion used by crisisDetection's semantic classifier.
   complete: ({ system, userPrompt, maxTokens = 150 }) =>
-    callMistral({
+    callTensorX({
       model:       client.classifierModel,
       system,
       messages:    [{ role: "user", content: userPrompt }],
@@ -466,7 +464,7 @@ Write in plain prose only. 2-4 sentences max unless the user is clearly asking y
     // ============================================
     async function callModel(sys, msgs) {
       return withTimeout(
-        callMistral({
+        callTensorX({
           model:       client.mainModel,
           system:      sys,
           messages:    msgs,
