@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>anvAI — somewhere to put down what you're carrying</title>
+<title>anvAI</title>
 <meta name="description" content="anvAI listens without judgment, notices what you're feeling, and stays with you until you're ready to move. A bridge to care, not a replacement for it.">
 
 <!-- Open Graph -->
@@ -273,6 +273,7 @@
   /* Faded label curving around the orb body — readable but secondary to the orb */
   .orb-love-ring{
     position:absolute; inset:0; width:100%; height:100%;
+    overflow:visible;               /* glyphs at the viewBox edge stay uncut */
     transform-origin:50% 50%;
     animation:orbRingSpin 44s linear infinite;
   }
@@ -302,15 +303,6 @@
     .orb-love-ring{ animation:none; }
     .orb-love-num{ animation:none; }
   }
-
-  .scroll-cue{
-    position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
-    display:flex; flex-direction:column; align-items:center; gap:8px;
-    color:var(--rose-grey); font-size:11px; font-family:var(--font-mono); letter-spacing:0.1em; text-transform:uppercase;
-    opacity:0.6;
-  }
-  .scroll-cue .line{ width:1px; height:34px; background:linear-gradient(var(--rose-grey), transparent); animation:scrollpulse 2.2s ease-in-out infinite; }
-  @keyframes scrollpulse{ 0%,100%{ opacity:0.3; } 50%{ opacity:0.9; } }
 
   /* ---------- REVEAL ---------- */
   .reveal{ opacity:0; transform:translateY(28px); transition:opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
@@ -598,7 +590,7 @@
     <a href="#feel">how it feels</a>
     <a href="#grounding">what it's built on</a>
     <span class="nav-love" id="navLove" title="&quot;I love you&quot;s said to anvAI">
-      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.9-10-9.6C.4 8 1.9 4.5 5.2 4.5c2 0 3.4 1.2 4.3 2.6.9-1.4 2.3-2.6 4.3-2.6 3.3 0 4.8 3.5 3.2 6.9C19.5 16.1 12 21 12 21z"/></svg>
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
       <span class="nl-num" id="navLoveNum">0</span>
       <span class="nl-label">loved</span>
     </span>
@@ -627,10 +619,10 @@
     <div class="orb-love" id="orbLove" hidden aria-hidden="true">
       <svg class="orb-love-ring" viewBox="0 0 100 100">
         <defs>
-          <path id="orbLovePath" d="M 50,50 m -35,0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0"/>
+          <path id="orbLovePath" d="M 50,50 m -47,0 a 47,47 0 1,1 94,0 a 47,47 0 1,1 -94,0"/>
         </defs>
         <text>
-          <textPath href="#orbLovePath" startOffset="0">· number of people who loved it&nbsp;&nbsp;·&nbsp;&nbsp;number of people who loved it&nbsp;&nbsp;</textPath>
+          <textPath href="#orbLovePath" startOffset="0">· number of people who loved it&nbsp;&nbsp;·&nbsp;&nbsp;number of people who loved it&nbsp;&nbsp;·&nbsp;&nbsp;number of people who loved it&nbsp;&nbsp;</textPath>
         </text>
       </svg>
       <span class="orb-love-num" id="orbLoveNum">0</span>
@@ -650,7 +642,6 @@
     <span class="hero-fineprint">No account to try it · private · free to start</span>
   </div>
 
-  <div class="scroll-cue"><span>scroll</span><div class="line"></div></div>
 </section>
 
 <section class="vignettes wrap" id="feel">
