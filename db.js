@@ -52,6 +52,11 @@ async function initSchema() {
       created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    CREATE TABLE IF NOT EXISTS counters (
+      name  TEXT PRIMARY KEY,
+      value BIGINT NOT NULL DEFAULT 0
+    );
+
     CREATE INDEX IF NOT EXISTS idx_chat_sessions_user   ON chat_sessions(user_id, updated_at DESC);
     CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(chat_session_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS idx_auth_sessions_expiry  ON auth_sessions(expires_at);

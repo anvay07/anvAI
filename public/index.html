@@ -247,6 +247,30 @@
   .btn-primary:hover svg{ transform:translateX(3px); }
   .hero-fineprint{ font-size:12.5px; color:var(--rose-grey); opacity:0.75; letter-spacing:0.01em; }
 
+  /* ---------- LOVE COUNTER ---------- */
+  .love-counter{
+    margin-top:30px;
+    display:inline-flex; align-items:center; gap:11px;
+    padding:11px 22px;
+    background:rgba(221,122,87,0.07);
+    border:1px solid rgba(221,122,87,0.22);
+    border-radius:100px;
+    opacity:0; transform:translateY(10px);
+    transition:opacity .8s ease, transform .8s ease;
+  }
+  .love-counter.in{ opacity:1; transform:translateY(0); }
+  .love-heart{
+    width:17px; height:17px; flex-shrink:0; color:var(--terracotta);
+    animation:lovebeat 1.8s ease-in-out infinite;
+  }
+  @keyframes lovebeat{ 0%,100%{ transform:scale(1); } 15%{ transform:scale(1.22); } 30%{ transform:scale(1); } 45%{ transform:scale(1.15); } }
+  .love-text{ font-size:13.5px; color:var(--cream); letter-spacing:0.01em; }
+  .love-num{
+    font-family:var(--font-mono); font-weight:400;
+    color:var(--blush); font-size:14.5px;
+    font-variant-numeric:tabular-nums;
+  }
+
   .scroll-cue{
     position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
     display:flex; flex-direction:column; align-items:center; gap:8px;
@@ -572,6 +596,11 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </a>
     <span class="hero-fineprint">No account to try it · private · free to start</span>
+  </div>
+
+  <div class="love-counter" id="loveCounter" hidden>
+    <svg class="love-heart" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.9-10-9.6C.4 8 1.9 4.5 5.2 4.5c2 0 3.4 1.2 4.3 2.6.9-1.4 2.3-2.6 4.3-2.6 3.3 0 4.8 3.5 3.2 6.9C19.5 16.1 12 21 12 21z"/></svg>
+    <span class="love-text"><span class="love-num" id="loveNum">0</span> "I love you"s said to anvAI</span>
   </div>
 
   <div class="scroll-cue"><span>scroll</span><div class="line"></div></div>
@@ -912,6 +941,38 @@
     if(tries > 80) return; // ~8s — give up quietly, links fall back to plain nav
     setTimeout(function(){ whenGisLoaded(cb, tries + 1); }, 100);
   }
+
+  /* ---------- Love counter: fetch + animated count-up ---------- */
+  (function(){
+    var el = document.getElementById("loveCounter");
+    var numEl = document.getElementById("loveNum");
+    if(!el || !numEl) return;
+    fetch("/api/love")
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var target = Math.max(0, parseInt(data.count, 10) || 0);
+        if(target < 1) return; // don't advertise zero
+        el.hidden = false;
+        // setTimeout (not rAF) so the reveal still fires when the tab is
+        // backgrounded, where requestAnimationFrame is paused.
+        setTimeout(function(){ el.classList.add("in"); }, 30);
+
+        var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if(reduceMotion){ numEl.textContent = target.toLocaleString(); return; }
+
+        var duration = 1400, start = null;
+        function step(ts){
+          if(start === null) start = ts;
+          var p = Math.min((ts - start) / duration, 1);
+          var eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+          numEl.textContent = Math.round(eased * target).toLocaleString();
+          if(p < 1) requestAnimationFrame(step);
+          else numEl.textContent = target.toLocaleString();
+        }
+        requestAnimationFrame(step);
+      })
+      .catch(function(){ /* counter unavailable — stays hidden */ });
+  })();
 
   fetch("/api/auth/config")
     .then(function(r){ return r.json(); })

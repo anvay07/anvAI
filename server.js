@@ -15,6 +15,7 @@ const eq               = require("./anvai-eq-improvements");
 const db                = require("./db");
 const auth              = require("./auth");
 const chatStore         = require("./chatStore");
+const counterStore      = require("./counterStore");
 
 dotenv.config();
 
@@ -380,6 +381,17 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" }); // don't leak server details
 });
 
+// Public "I love you" tally — social-proof counter shown on the landing page.
+app.get("/api/love", async (req, res) => {
+  try {
+    const count = await counterStore.getLoveCount();
+    res.json({ count });
+  } catch (error) {
+    console.error("[/api/love error]", error);
+    res.json({ count: 0 });
+  }
+});
+
 // ============================================
 // AUTH — Google sign-in (optional; anonymous chat works without it)
 // ============================================
@@ -516,6 +528,9 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
     }
 
     const trimmedMessage = userMessage.trim();
+
+    // Bump the global love tally when someone tells anvAI they love it.
+    counterStore.maybeCountLove(trimmedMessage);
 
     let session = getSession(sessionId);
     if (!session) {
