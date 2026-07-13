@@ -107,6 +107,19 @@
   .nav-links{ display:flex; align-items:center; gap:36px; font-size:14px; color:var(--rose-grey); }
   .nav-links a{ transition:color .25s ease; }
   .nav-links a:hover{ color:var(--cream); }
+  .nav-love{
+    display:none; align-items:center; gap:7px;
+    padding:7px 14px;
+    background:rgba(221,122,87,0.08);
+    border:1px solid rgba(221,122,87,0.22);
+    border-radius:100px;
+    font-size:13px; color:var(--cream);
+    white-space:nowrap;
+  }
+  .nav-love.show{ display:inline-flex; }
+  .nav-love svg{ width:13px; height:13px; color:var(--terracotta); flex-shrink:0; animation:lovebeat 1.8s ease-in-out infinite; }
+  .nav-love .nl-num{ font-family:var(--font-mono); color:var(--blush); font-variant-numeric:tabular-nums; }
+  .nav-love .nl-label{ color:var(--rose-grey); }
   .nav-cta{
     font-family:var(--font-body); font-size:14px; font-weight:500;
     color:var(--ink); background:var(--cream);
@@ -565,6 +578,11 @@
   <div class="nav-links">
     <a href="#feel">how it feels</a>
     <a href="#grounding">what it's built on</a>
+    <span class="nav-love" id="navLove" title="&quot;I love you&quot;s said to anvAI">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.9-10-9.6C.4 8 1.9 4.5 5.2 4.5c2 0 3.4 1.2 4.3 2.6.9-1.4 2.3-2.6 4.3-2.6 3.3 0 4.8 3.5 3.2 6.9C19.5 16.1 12 21 12 21z"/></svg>
+      <span class="nl-num" id="navLoveNum">0</span>
+      <span class="nl-label">loved</span>
+    </span>
   </div>
   <a href="chat.html" class="nav-cta">Start talking</a>
   <button class="nav-hamburger" id="navHamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">
@@ -946,30 +964,43 @@
   (function(){
     var el = document.getElementById("loveCounter");
     var numEl = document.getElementById("loveNum");
+    var navBadge = document.getElementById("navLove");
+    var navNum = document.getElementById("navLoveNum");
     if(!el || !numEl) return;
+
+    function countUp(node, target){
+      var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if(reduceMotion){ node.textContent = target.toLocaleString(); return; }
+      var duration = 1400, start = null;
+      function step(ts){
+        if(start === null) start = ts;
+        var p = Math.min((ts - start) / duration, 1);
+        var eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+        node.textContent = Math.round(eased * target).toLocaleString();
+        if(p < 1) requestAnimationFrame(step);
+        else node.textContent = target.toLocaleString();
+      }
+      requestAnimationFrame(step);
+    }
+
     fetch("/api/love")
       .then(function(r){ return r.json(); })
       .then(function(data){
         var target = Math.max(0, parseInt(data.count, 10) || 0);
         if(target < 1) return; // don't advertise zero
+
+        // Hero counter
         el.hidden = false;
         // setTimeout (not rAF) so the reveal still fires when the tab is
         // backgrounded, where requestAnimationFrame is paused.
         setTimeout(function(){ el.classList.add("in"); }, 30);
+        countUp(numEl, target);
 
-        var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if(reduceMotion){ numEl.textContent = target.toLocaleString(); return; }
-
-        var duration = 1400, start = null;
-        function step(ts){
-          if(start === null) start = ts;
-          var p = Math.min((ts - start) / duration, 1);
-          var eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
-          numEl.textContent = Math.round(eased * target).toLocaleString();
-          if(p < 1) requestAnimationFrame(step);
-          else numEl.textContent = target.toLocaleString();
+        // Compact nav badge (desktop) — always above the fold
+        if(navBadge && navNum){
+          navBadge.classList.add("show");
+          countUp(navNum, target);
         }
-        requestAnimationFrame(step);
       })
       .catch(function(){ /* counter unavailable — stays hidden */ });
   })();
