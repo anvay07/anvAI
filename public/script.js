@@ -1,11 +1,21 @@
 // script.js - Frontend logic for anvAI
 
+// Animated avatar — waveform "heartbeat" that oscillates. Only the newest
+// assistant message shows this; older ones are frozen to STATIC_AVATAR_SVG.
 const AVATAR_SVG = `<svg width="34" height="34" viewBox="-2 -2 44 44" xmlns="http://www.w3.org/2000/svg">
   <circle cx="20" cy="20" r="20" fill="#F5E6DC"/>
   <polyline points="3,20 8,20 11,11 15,29 18.5,20 21,15.5 23,20 37,20" fill="none" stroke="#D97756" stroke-opacity="0.18" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
   <polyline points="3,20 8,20 11,11 15,29 18.5,20 21,15.5 23,20 37,20" fill="none" stroke="#D97756" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100">
     <animate attributeName="stroke-dashoffset" from="100" to="-100" dur="1.6s" repeatCount="indefinite"/>
   </polyline>
+  <circle cx="21" cy="15.5" r="1.5" fill="#6B3A54"/>
+</svg>`;
+
+// Frozen version — same waveform, no animation (for previous AI messages).
+const STATIC_AVATAR_SVG = `<svg width="34" height="34" viewBox="-2 -2 44 44" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="20" cy="20" r="20" fill="#F5E6DC"/>
+  <polyline points="3,20 8,20 11,11 15,29 18.5,20 21,15.5 23,20 37,20" fill="none" stroke="#D97756" stroke-opacity="0.18" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="3,20 8,20 11,11 15,29 18.5,20 21,15.5 23,20 37,20" fill="none" stroke="#D97756" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="21" cy="15.5" r="1.5" fill="#6B3A54"/>
 </svg>`;
 
@@ -80,6 +90,11 @@ class anvAIClient {
     this.user = null;
     this.serverChats = [];
 
+    // The AI message the user is quote-replying to (null when not replying)
+    this.replyingTo = null;
+    // The one assistant avatar currently animating its heartbeat
+    this.currentAvatar = null;
+
     this.elements = {
       messagesContainer: document.getElementById("messages"),
       userInput: document.getElementById("userInput"),
@@ -107,6 +122,9 @@ class anvAIClient {
       accountAvatar: document.getElementById("accountAvatar"),
       accountEmail: document.getElementById("accountEmail"),
       signOutBtn: document.getElementById("signOutBtn"),
+      replyBar: document.getElementById("replyBar"),
+      replyBarText: document.getElementById("replyBarText"),
+      replyBarCancel: document.getElementById("replyBarCancel"),
     };
 
     this.init();
@@ -179,6 +197,27 @@ class anvAIClient {
       this.closeSidebarMobile()
     );
     this.elements.signOutBtn.addEventListener("click", () => this.signOut());
+    this.elements.replyBarCancel.addEventListener("click", () => this.cancelReply());
+    this.elements.userInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.replyingTo) this.cancelReply();
+    });
+  }
+
+  // ============================================
+  // Quote-reply to an AI message
+  // ============================================
+
+  startReply(text) {
+    this.replyingTo = text;
+    const snippet = text.length > 140 ? text.slice(0, 140).trim() + "…" : text;
+    this.elements.replyBarText.textContent = snippet;
+    this.elements.replyBar.classList.remove("hidden");
+    this.elements.userInput.focus();
+  }
+
+  cancelReply() {
+    this.replyingTo = null;
+    this.elements.replyBar.classList.add("hidden");
   }
 
   // ============================================
@@ -627,15 +666,26 @@ class anvAIClient {
 
   // Send message to the agent
   async sendMessage() {
-    const userMessage = this.elements.userInput.value.trim();
+    const typed = this.elements.userInput.value.trim();
 
-    if (!userMessage) {
+    if (!typed) {
       this.elements.userInput.focus();
       return;
     }
 
     if (this.isWaitingForResponse) {
       return;
+    }
+
+    // If quote-replying, prepend the quoted AI text as a "> " block so it's
+    // shown as a quote and the AI sees which message is being answered.
+    let userMessage = typed;
+    if (this.replyingTo) {
+      const snippet = this.replyingTo.length > 160
+        ? this.replyingTo.slice(0, 160).trim() + "…"
+        : this.replyingTo;
+      userMessage = "> " + snippet.replace(/\s*\n\s*/g, " ") + "\n\n" + typed;
+      this.cancelReply();
     }
 
     // Clear input and disable send
@@ -723,7 +773,11 @@ class anvAIClient {
     if (role === "user") {
       avatar.textContent = "💙";
     } else {
+      // Freeze the previously-animated assistant heartbeat; only the newest
+      // AI message oscillates.
+      if (this.currentAvatar) this.currentAvatar.innerHTML = STATIC_AVATAR_SVG;
       avatar.innerHTML = AVATAR_SVG;
+      this.currentAvatar = avatar;
     }
 
     // Content
@@ -735,9 +789,21 @@ class anvAIClient {
       message.classList.add("crisis-message");
     }
 
-    // Parse content (handle line breaks)
-    const paragraphs = content.split("\n\n");
-    paragraphs.forEach((para) => {
+    // Parse content — leading "> " lines become a quoted-reply block
+    let body = content;
+    const quoteMatch = content.match(/^((?:>[^\n]*\n?)+)\n?([\s\S]*)$/);
+    if (quoteMatch) {
+      const quoted = quoteMatch[1].replace(/^>\s?/gm, "").trim();
+      body = quoteMatch[2];
+      const quoteEl = document.createElement("div");
+      quoteEl.className = "msg-quote";
+      quoteEl.textContent = quoted;
+      contentDiv.appendChild(quoteEl);
+    }
+
+    // Parse remaining content (handle line breaks)
+    body.split("\n\n").forEach((para) => {
+      if (!para.trim()) return;
       const p = document.createElement("p");
       p.textContent = para;
       contentDiv.appendChild(p);
@@ -745,6 +811,19 @@ class anvAIClient {
 
     message.appendChild(avatar);
     message.appendChild(contentDiv);
+
+    // Reply button on AI messages — quote this message in your next reply
+    if (role === "assistant" && !metadata?.isTyping) {
+      const replyBtn = document.createElement("button");
+      replyBtn.className = "msg-reply-btn";
+      replyBtn.title = "Reply";
+      replyBtn.setAttribute("aria-label", "Reply to this message");
+      replyBtn.innerHTML =
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>';
+      replyBtn.addEventListener("click", () => this.startReply(body.trim() || content));
+      message.appendChild(replyBtn);
+    }
+
     messageGroup.appendChild(message);
 
     // Generate unique ID
@@ -867,6 +946,7 @@ class anvAIClient {
   // Clear all messages
   clearMessages() {
     this.elements.messagesContainer.innerHTML = "";
+    this.currentAvatar = null;
   }
 
   // Show error message
