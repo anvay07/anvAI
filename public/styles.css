@@ -193,6 +193,65 @@ body {
   padding: 0.6rem 0.4rem;
 }
 
+.sidebar-account {
+  flex-shrink: 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ink-border);
+}
+
+.sidebar-account.hidden { display: none; }
+
+.account-signed-out { display: flex; justify-content: center; }
+
+.account-signed-in {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.account-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ink-card);
+  object-fit: cover;
+}
+
+.account-info { flex: 1; min-width: 0; }
+
+.account-email {
+  color: var(--cream);
+  font-size: 0.83em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-sublabel {
+  color: var(--rose-grey);
+  opacity: 0.7;
+  font-size: 0.7em;
+  margin-top: 0.1rem;
+}
+
+.account-signout-btn {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--ink-border);
+  background: transparent;
+  color: var(--rose-grey);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.account-signout-btn:hover { background: var(--ink-card); color: var(--cream); }
+
 .sidebar-backdrop {
   display: none;
 }

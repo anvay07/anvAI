@@ -24,6 +24,21 @@ function msgsKey(id) {
   return STORAGE_PREFIX + "msgs:" + id;
 }
 
+// The GIS script tag is async/defer, so it may not be attached to `window`
+// yet when our own script runs — poll briefly instead of assuming it's ready.
+function waitForGoogleIdentity(timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    (function check() {
+      if (window.google?.accounts?.id) return resolve(window.google);
+      if (Date.now() - start > timeoutMs) {
+        return reject(new Error("Google Identity Services failed to load."));
+      }
+      setTimeout(check, 100);
+    })();
+  });
+}
+
 const storage = {
   get(key, fallback) {
     try {
@@ -56,6 +71,12 @@ class anvAIClient {
     this.isWaitingForResponse = false;
     this.apiUrl = "/api";
 
+    // Auth state — anvAI works fully anonymously; these stay null/false/[]
+    // when sign-in isn't configured or the user hasn't signed in.
+    this.authEnabled = false;
+    this.user = null;
+    this.serverChats = [];
+
     this.elements = {
       messagesContainer: document.getElementById("messages"),
       userInput: document.getElementById("userInput"),
@@ -76,6 +97,13 @@ class anvAIClient {
       sidebarNewSessionBtn: document.getElementById("sidebarNewSessionBtn"),
       searchChatsInput: document.getElementById("searchChatsInput"),
       recentSessionsList: document.getElementById("recentSessionsList"),
+      accountArea: document.getElementById("accountArea"),
+      signedOutView: document.getElementById("signedOutView"),
+      signedInView: document.getElementById("signedInView"),
+      googleSignInBtn: document.getElementById("googleSignInBtn"),
+      accountAvatar: document.getElementById("accountAvatar"),
+      accountEmail: document.getElementById("accountEmail"),
+      signOutBtn: document.getElementById("signOutBtn"),
     };
 
     this.init();
@@ -88,8 +116,23 @@ class anvAIClient {
     // Setup event listeners
     this.setupEventListeners();
 
-    // Resume the last active session if one exists, otherwise fall back to
-    // the most recently used session, otherwise start fresh.
+    // Sign-in is optional — this resolves this.authEnabled / this.user and
+    // renders the Google button if applicable.
+    await this.initAuth();
+
+    if (this.user) {
+      await this.fetchServerChats();
+      if (this.serverChats.length) {
+        const mostRecent = [...this.serverChats].sort((a, b) => b.updatedAt - a.updatedAt)[0];
+        await this.resumeSession(mostRecent.id);
+      } else {
+        await this.startNewSession();
+      }
+      return;
+    }
+
+    // Anonymous flow — resume the last active local session if one exists,
+    // otherwise fall back to the most recently used one, otherwise start fresh.
     const activeId = storage.get(ACTIVE_KEY, null);
     const index = this.loadIndex();
 
@@ -132,6 +175,133 @@ class anvAIClient {
     this.elements.sidebarBackdrop.addEventListener("click", () =>
       this.closeSidebarMobile()
     );
+    this.elements.signOutBtn.addEventListener("click", () => this.signOut());
+  }
+
+  // ============================================
+  // Auth — Google sign-in (optional)
+  // ============================================
+
+  async initAuth() {
+    try {
+      const configRes = await fetch(`${this.apiUrl}/auth/config`);
+      const config = await configRes.json();
+      this.authEnabled = Boolean(config.enabled);
+
+      if (!this.authEnabled) {
+        this.elements.accountArea.classList.add("hidden");
+        return;
+      }
+
+      this.initGoogleSignIn(config.googleClientId);
+
+      const meRes = await fetch(`${this.apiUrl}/auth/me`, { credentials: "same-origin" });
+      if (meRes.ok) {
+        this.user = await meRes.json();
+        this.showSignedIn();
+      } else {
+        this.showSignedOut();
+      }
+    } catch (error) {
+      console.error("Auth init error:", error);
+      this.authEnabled = false;
+      this.elements.accountArea.classList.add("hidden");
+    }
+  }
+
+  async initGoogleSignIn(clientId) {
+    if (!clientId) return;
+    try {
+      const google = await waitForGoogleIdentity();
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (response) => this.handleGoogleCredential(response),
+        auto_select: false,
+      });
+      google.accounts.id.renderButton(this.elements.googleSignInBtn, {
+        theme: "filled_black",
+        size: "medium",
+        shape: "pill",
+        text: "signin",
+        width: 220,
+      });
+    } catch (error) {
+      console.error("Google Identity Services failed to load:", error);
+    }
+  }
+
+  async handleGoogleCredential(response) {
+    try {
+      const res = await fetch(`${this.apiUrl}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ idToken: response.credential }),
+      });
+      if (!res.ok) throw new Error("Sign-in request failed");
+
+      this.user = await res.json();
+      this.showSignedIn();
+      await this.fetchServerChats();
+      // Start a fresh, account-owned session rather than trying to adopt
+      // whatever anonymous session was active before signing in.
+      await this.startNewSession();
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      this.showError("Sign-in failed. Please try again.");
+    }
+  }
+
+  async signOut() {
+    try {
+      await fetch(`${this.apiUrl}/auth/logout`, { method: "POST", credentials: "same-origin" });
+    } catch (error) {
+      console.error("Sign-out error:", error);
+    }
+    try {
+      window.google?.accounts?.id.disableAutoSelect();
+    } catch (error) {
+      // GIS not loaded — nothing to disable
+    }
+
+    this.user = null;
+    this.serverChats = [];
+    this.showSignedOut();
+    await this.startNewSession();
+  }
+
+  showSignedIn() {
+    this.elements.signedOutView.classList.add("hidden");
+    this.elements.signedInView.classList.remove("hidden");
+    this.elements.accountEmail.textContent = this.user.email;
+    this.elements.accountEmail.title = this.user.email;
+    this.elements.accountAvatar.src = this.user.picture || "";
+  }
+
+  showSignedOut() {
+    this.elements.signedOutView.classList.remove("hidden");
+    this.elements.signedInView.classList.add("hidden");
+  }
+
+  async fetchServerChats() {
+    try {
+      const res = await fetch(`${this.apiUrl}/chats`, { credentials: "same-origin" });
+      if (!res.ok) {
+        this.serverChats = [];
+        return;
+      }
+      const data = await res.json();
+      this.serverChats = (data.chats || []).map((c) => ({
+        id: c.id,
+        title: c.title,
+        preview: c.preview,
+        createdAt: new Date(c.created_at).getTime(),
+        updatedAt: new Date(c.updated_at).getTime(),
+      }));
+    } catch (error) {
+      console.error("fetchServerChats error:", error);
+      this.serverChats = [];
+    }
   }
 
   // ============================================
@@ -180,9 +350,20 @@ class anvAIClient {
     storage.set(ACTIVE_KEY, id);
   }
 
-  // Cache a real conversation turn and refresh its session's sidebar entry
-  cachePush(role, content, metadata) {
+  // Cache a real conversation turn and refresh its session's sidebar entry.
+  // Signed-in users are persisted server-side (inside /api/chat) — this just
+  // re-syncs the local view of the list once that write has landed.
+  async cachePush(role, content, metadata) {
     if (!this.sessionId) return;
+
+    if (this.user) {
+      if (role === "assistant") {
+        await this.fetchServerChats();
+        this.renderSessionList();
+      }
+      return;
+    }
+
     const cache = this.getCache(this.sessionId);
     cache.push({ role, content, metadata: metadata || null, ts: Date.now() });
     this.saveCache(this.sessionId, cache);
@@ -219,10 +400,12 @@ class anvAIClient {
     return new Date(ts).toLocaleDateString();
   }
 
-  // Render the recent-sessions list, applying the search box filter
+  // Render the recent-sessions list, applying the search box filter.
+  // Source is the server list when signed in, the local index otherwise.
   renderSessionList() {
     const query = (this.elements.searchChatsInput.value || "").trim().toLowerCase();
-    let index = [...this.loadIndex()].sort((a, b) => b.updatedAt - a.updatedAt);
+    const source = this.user ? this.serverChats : this.loadIndex();
+    let index = [...source].sort((a, b) => b.updatedAt - a.updatedAt);
 
     if (query) {
       index = index.filter(
@@ -290,7 +473,9 @@ class anvAIClient {
   }
 
   // Switch the active session and repopulate the transcript from its cache
-  resumeSession(id) {
+  // (local for anonymous users, server-fetched — with an ownership check
+  // enforced server-side — for signed-in users).
+  async resumeSession(id) {
     if (!id) return;
 
     this.sessionId = id;
@@ -299,20 +484,58 @@ class anvAIClient {
     this.hideEmotionalState();
     this.hideCrisisAlert();
 
-    const cached = this.getCache(id);
+    let cached = [];
+    if (this.user) {
+      try {
+        const res = await fetch(`${this.apiUrl}/chats/${id}/messages`, { credentials: "same-origin" });
+        if (res.ok) {
+          const data = await res.json();
+          cached = (data.messages || []).map((m) => ({
+            role: m.role,
+            content: m.content,
+            metadata: m.metadata,
+          }));
+        }
+      } catch (error) {
+        console.error("Error loading chat history:", error);
+      }
+    } else {
+      cached = this.getCache(id);
+    }
+
     if (cached.length) {
       cached.forEach((m) => this.addMessage(m.content, m.role, m.metadata));
     } else {
       this.addMessage("Hey. I'm here — what's on your mind?", "assistant", null);
     }
 
-    this.setActiveSession(id);
+    if (!this.user) this.setActiveSession(id);
     this.closeSidebarMobile();
     this.renderSessionList();
     this.elements.userInput.focus();
   }
 
-  deleteSession(id) {
+  async deleteSession(id) {
+    if (this.user) {
+      try {
+        await fetch(`${this.apiUrl}/chats/${id}`, { method: "DELETE", credentials: "same-origin" });
+      } catch (error) {
+        console.error("Error deleting chat:", error);
+      }
+      await this.fetchServerChats();
+      if (id === this.sessionId) {
+        if (this.serverChats.length) {
+          const mostRecent = [...this.serverChats].sort((a, b) => b.updatedAt - a.updatedAt)[0];
+          await this.resumeSession(mostRecent.id);
+        } else {
+          await this.startNewSession();
+        }
+      } else {
+        this.renderSessionList();
+      }
+      return;
+    }
+
     const index = this.loadIndex().filter((s) => s.id !== id);
     this.saveIndex(index);
     storage.remove(msgsKey(id));
@@ -344,6 +567,7 @@ class anvAIClient {
     try {
       const response = await fetch(`${this.apiUrl}/session/new`, {
         method: "POST",
+        credentials: "same-origin",
       });
 
       const data = await response.json();
@@ -358,24 +582,23 @@ class anvAIClient {
 
       console.log(`✅ New session started: ${this.sessionId}`);
 
-      // Register it in the recent-chats index and seed its cache
       const now = Date.now();
-      this.addIndexEntry({
-        id: this.sessionId,
-        title: "New chat",
-        preview: "",
-        createdAt: now,
-        updatedAt: now,
-      });
-      this.setActiveSession(this.sessionId);
+      if (this.user) {
+        // Server already created the owned chat_sessions row for this ID —
+        // just reflect it in our local view of the list.
+        this.serverChats.unshift({ id: this.sessionId, title: "New chat", preview: "", createdAt: now, updatedAt: now });
+      } else {
+        this.addIndexEntry({ id: this.sessionId, title: "New chat", preview: "", createdAt: now, updatedAt: now });
+        this.setActiveSession(this.sessionId);
+      }
 
-      // Show welcome message
+      // Show welcome message (client-side only — nothing to persist yet)
       this.addMessage(
         data.message,
         "assistant",
         null
       );
-      this.cachePush("assistant", data.message, null);
+      if (!this.user) this.cachePush("assistant", data.message, null);
 
       this.closeSidebarMobile();
       this.renderSessionList();
@@ -415,6 +638,7 @@ class anvAIClient {
     try {
       const response = await fetch(`${this.apiUrl}/chat`, {
         method: "POST",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
         },

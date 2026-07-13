@@ -5,6 +5,8 @@
 .env
 .env.local
 .env.*.local
+google auth.json
+test_keys_temp.js
 
 # Dependencies
 node_modules/

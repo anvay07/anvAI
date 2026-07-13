@@ -1,16 +1,20 @@
 "use strict";
 
-const crypto     = require("crypto");
-const Anthropic  = require("@anthropic-ai/sdk");
-const express    = require("express");
-const cors       = require("cors");
-const helmet     = require("helmet");
-const rateLimit  = require("express-rate-limit");
-const dotenv     = require("dotenv");
+const crypto       = require("crypto");
+const Anthropic    = require("@anthropic-ai/sdk");
+const express      = require("express");
+const cors         = require("cors");
+const helmet       = require("helmet");
+const rateLimit    = require("express-rate-limit");
+const dotenv       = require("dotenv");
+const cookieParser = require("cookie-parser");
 
 const crisisDetector   = require("./crisisDetection");
 const emotionalAnalyzer = require("./emotionalAnalyzer");
 const eq               = require("./anvai-eq-improvements");
+const db                = require("./db");
+const auth              = require("./auth");
+const chatStore         = require("./chatStore");
 
 dotenv.config();
 
@@ -127,12 +131,12 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc:     ["'self'"],
-        scriptSrc:      ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
+        scriptSrc:      ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com", "https://accounts.google.com"],
         styleSrc:       ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc:        ["'self'", "https://fonts.gstatic.com"],
-        imgSrc:         ["'self'", "data:", "blob:"],
-        connectSrc:     ["'self'"],
-        frameSrc:       ["'none'"],
+        imgSrc:         ["'self'", "data:", "blob:", "https://lh3.googleusercontent.com"],
+        connectSrc:     ["'self'", "https://accounts.google.com"],
+        frameSrc:       ["https://accounts.google.com"],
         objectSrc:      ["'none'"],
         upgradeInsecureRequests: IS_PROD ? [] : null,
       },
@@ -151,7 +155,7 @@ const allowedOrigins = IS_PROD && rawOrigins.length
 app.use(
   cors({
     origin: allowedOrigins,
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "DELETE"],
     allowedHeaders: ["Content-Type"],
     credentials: false,
   })
@@ -159,6 +163,7 @@ app.use(
 
 // ─── Body parser — cap payload at 16 KB ───────────────────────────────────────
 app.use(express.json({ limit: "16kb" }));
+app.use(cookieParser());
 
 // ─── Rate limiters ────────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({
@@ -181,6 +186,12 @@ const sessionCreateLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,
   message: { error: "Too many sessions created. Please wait." },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  message: { error: "Too many sign-in attempts. Please wait." },
 });
 
 app.use(globalLimiter);
@@ -340,6 +351,10 @@ if (HAS_CONFIG_ERROR) {
 
 app.use(express.static("public"));
 
+// Non-blocking: attaches req.user when a valid session cookie is present.
+// Chat routes work identically whether this resolves a user or not.
+app.use(auth.attachUser());
+
 // ============================================
 // INPUT VALIDATION HELPERS
 // ============================================
@@ -362,10 +377,119 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" }); // don't leak server details
 });
 
-app.post("/api/session/new", sessionCreateLimiter, (req, res) => {
+// ============================================
+// AUTH — Google sign-in (optional; anonymous chat works without it)
+// ============================================
+
+app.get("/api/auth/config", (req, res) => {
+  res.json({
+    enabled:        auth.AUTH_ENABLED,
+    googleClientId: auth.AUTH_ENABLED ? auth.GOOGLE_CLIENT_ID : null,
+  });
+});
+
+app.post("/api/auth/google", authLimiter, async (req, res) => {
+  if (!auth.AUTH_ENABLED) {
+    return res.status(503).json({ error: "Sign-in is not configured on this deployment." });
+  }
+  try {
+    const { idToken } = req.body;
+    if (typeof idToken !== "string" || !idToken) {
+      return res.status(400).json({ error: "Missing Google credential." });
+    }
+    const profile = await auth.verifyGoogleIdToken(idToken);
+    const user    = await auth.upsertUser(profile);
+    const { token } = await auth.createAuthSession(user.id);
+    res.cookie(auth.COOKIE_NAME, token, auth.cookieOptions(IS_PROD));
+    res.json({ email: user.email, name: user.name, picture: user.picture });
+  } catch (error) {
+    console.error("[/api/auth/google error]", error);
+    res.status(401).json({ error: "Google sign-in failed. Please try again." });
+  }
+});
+
+app.post("/api/auth/logout", async (req, res) => {
+  try {
+    const token = req.cookies?.[auth.COOKIE_NAME];
+    if (token) await auth.deleteAuthSession(token);
+  } catch (error) {
+    console.error("[/api/auth/logout error]", error);
+  }
+  res.clearCookie(auth.COOKIE_NAME, { path: "/" });
+  res.json({ ok: true });
+});
+
+app.get("/api/auth/me", (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Not signed in." });
+  }
+  res.json({ email: req.user.email, name: req.user.name, picture: req.user.picture });
+});
+
+// ============================================
+// PERSISTED CHATS — only for signed-in users
+// ============================================
+
+app.get("/api/chats", auth.requireAuth, async (req, res) => {
+  try {
+    const chats = await chatStore.listChatSessions(req.user.id);
+    res.json({ chats });
+  } catch (error) {
+    console.error("[/api/chats error]", error);
+    res.status(500).json({ error: "Something went wrong." });
+  }
+});
+
+app.get("/api/chats/:id/messages", auth.requireAuth, async (req, res) => {
+  const { id } = req.params;
+  if (!validateSessionId(id)) {
+    return res.status(400).json({ error: "Invalid session ID." });
+  }
+  try {
+    const messages = await chatStore.getChatMessages(id, req.user.id);
+    if (messages === null) {
+      // Same response whether the chat doesn't exist or belongs to someone else —
+      // never let a client distinguish "not found" from "not yours".
+      return res.status(404).json({ error: "Chat not found." });
+    }
+    res.json({ messages });
+  } catch (error) {
+    console.error("[/api/chats/:id/messages error]", error);
+    res.status(500).json({ error: "Something went wrong." });
+  }
+});
+
+app.delete("/api/chats/:id", auth.requireAuth, async (req, res) => {
+  const { id } = req.params;
+  if (!validateSessionId(id)) {
+    return res.status(400).json({ error: "Invalid session ID." });
+  }
+  try {
+    const deleted = await chatStore.deleteChatSession(id, req.user.id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Chat not found." });
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("[DELETE /api/chats/:id error]", error);
+    res.status(500).json({ error: "Something went wrong." });
+  }
+});
+
+app.post("/api/session/new", sessionCreateLimiter, async (req, res) => {
   const { sessionId, session } = createSession();
   // suppress session from conversation store just created above
   void session;
+
+  if (req.user) {
+    try {
+      await chatStore.createChatSession(sessionId, req.user.id);
+    } catch (error) {
+      console.error("[chatStore] createChatSession error", error);
+      // Anonymous in-memory chat still works even if persistence failed.
+    }
+  }
+
   res.json({
     sessionId,
     message: "Hey. I'm here — what's on your mind?",
@@ -405,6 +529,10 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
     );
 
     if (crisisAnalysis.isCrisis) {
+      persistTurn(sessionId, req.user, trimmedMessage, crisisAnalysis.response, {
+        isCrisis: true,
+        severity: crisisAnalysis.severity,
+      });
       return res.json({
         role:      "assistant",
         content:   crisisAnalysis.response,
@@ -530,6 +658,8 @@ Rules: no bullet points, no numbered lists, no bold text. Do NOT guess what the 
     session.lastUsed = Date.now();
     conversations.set(sessionId, session);
 
+    persistTurn(sessionId, req.user, trimmedMessage, draft, { emotionalState });
+
     res.json({
       response:       draft,
       emotionalState,
@@ -580,6 +710,22 @@ app.use((err, req, res, next) => {
 // HELPER FUNCTIONS
 // ============================================
 
+// Fire-and-forget: persist a turn for signed-in users without adding DB
+// latency to the response. Silently no-ops for anonymous users or if the
+// session wasn't created while signed in (never writes to a session it
+// doesn't already own).
+async function persistTurn(sessionId, user, userMessage, assistantMessage, assistantMeta) {
+  if (!user) return;
+  try {
+    const owned = await chatStore.isOwnedSession(sessionId, user.id);
+    if (!owned) return;
+    await chatStore.appendMessage(sessionId, "user", userMessage, null);
+    await chatStore.appendMessage(sessionId, "assistant", assistantMessage, assistantMeta || null);
+  } catch (error) {
+    console.error("[chatStore] persistTurn error", error);
+  }
+}
+
 function withTimeout(promise, ms) {
   return Promise.race([
     promise,
@@ -616,12 +762,16 @@ function extractThemes(history) {
 // ============================================
 function shutdown(signal) {
   console.log(`[${signal}] Shutting down gracefully…`);
-  server.close(() => {
-    console.log("Server closed.");
+  if (server) {
+    server.close(() => {
+      console.log("Server closed.");
+      process.exit(0);
+    });
+    // Force exit if not done in 10s
+    setTimeout(() => process.exit(1), 10000).unref();
+  } else {
     process.exit(0);
-  });
-  // Force exit if not done in 10s
-  setTimeout(() => process.exit(1), 10000).unref();
+  }
 }
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
@@ -643,7 +793,34 @@ process.on("uncaughtException", (err) => {
 // ============================================
 // START SERVER
 // ============================================
-const PORT   = parseInt(process.env.PORT, 10) || 3000;
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`anvAI running — port ${PORT} — ${process.env.NODE_ENV}`);
-});
+const PORT = parseInt(process.env.PORT, 10) || 3000;
+let server;
+
+async function start() {
+  if (db.DB_ENABLED) {
+    try {
+      await db.initSchema();
+      console.log("[startup] Database schema ready.");
+    } catch (error) {
+      console.error(
+        "[startup] Database schema init failed — sign-in and persisted chats will error until this is fixed:",
+        error
+      );
+    }
+  } else {
+    console.log("[startup] DATABASE_URL not set — running anonymous-only (no accounts, no persisted history).");
+  }
+
+  if (!auth.AUTH_ENABLED) {
+    console.log("[startup] GOOGLE_CLIENT_ID not set — Google sign-in is disabled.");
+  }
+
+  // Prune expired auth sessions hourly (no-ops when auth isn't configured)
+  setInterval(() => auth.pruneExpiredAuthSessions(), 60 * 60 * 1000).unref();
+
+  server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`anvAI running — port ${PORT} — ${process.env.NODE_ENV}`);
+  });
+}
+
+start();
