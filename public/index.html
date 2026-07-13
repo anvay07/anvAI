@@ -260,28 +260,47 @@
   .btn-primary:hover svg{ transform:translateX(3px); }
   .hero-fineprint{ font-size:12.5px; color:var(--rose-grey); opacity:0.75; letter-spacing:0.01em; }
 
-  /* ---------- LOVE COUNTER ---------- */
-  .love-counter{
-    margin-top:30px;
-    display:inline-flex; align-items:center; gap:11px;
-    padding:11px 22px;
-    background:rgba(221,122,87,0.07);
-    border:1px solid rgba(221,122,87,0.22);
-    border-radius:100px;
-    opacity:0; transform:translateY(10px);
-    transition:opacity .8s ease, transform .8s ease;
-  }
-  .love-counter.in{ opacity:1; transform:translateY(0); }
-  .love-heart{
-    width:17px; height:17px; flex-shrink:0; color:var(--terracotta);
-    animation:lovebeat 1.8s ease-in-out infinite;
-  }
   @keyframes lovebeat{ 0%,100%{ transform:scale(1); } 15%{ transform:scale(1.22); } 30%{ transform:scale(1); } 45%{ transform:scale(1.15); } }
-  .love-text{ font-size:13.5px; color:var(--cream); letter-spacing:0.01em; }
-  .love-num{
+
+  /* ---------- LOVE COUNTER — woven into the orb ---------- */
+  .orb-love{
+    position:absolute; inset:0; z-index:2;
+    pointer-events:none;            /* let orb clicks through */
+    opacity:0; transition:opacity 1.1s ease;
+  }
+  .orb-love.in{ opacity:1; }
+
+  /* Faded label curving around the orb body — readable but secondary to the orb */
+  .orb-love-ring{
+    position:absolute; inset:0; width:100%; height:100%;
+    transform-origin:50% 50%;
+    animation:orbRingSpin 44s linear infinite;
+  }
+  @keyframes orbRingSpin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+  .orb-love-ring text{
+    font-family:var(--font-mono);
+    font-size:4.2px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    fill:var(--cream);
+    fill-opacity:0.32;                /* faded so the orb reads first */
+  }
+
+  /* Count glowing in the white core "heart" of the orb */
+  .orb-love-num{
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%, -50%);
     font-family:var(--font-mono); font-weight:400;
-    color:var(--blush); font-size:14.5px;
-    font-variant-numeric:tabular-nums;
+    font-size:clamp(15px, 3.4vw, 22px);
+    color:#FFF8F0;
+    font-variant-numeric:tabular-nums; letter-spacing:0.02em;
+    text-shadow:0 0 10px rgba(255,248,240,0.75), 0 0 22px rgba(243,192,142,0.55);
+    animation:lovebeat 3.3s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .orb-love-ring{ animation:none; }
+    .orb-love-num{ animation:none; }
   }
 
   .scroll-cue{
@@ -602,6 +621,21 @@
     <div class="orb-glow"></div>
     <canvas id="orb-canvas" role="img" aria-label="An animated 3D orb that breathes softly — the visual heart of anvAI"></canvas>
     <div class="orb-fallback"></div>
+
+    <!-- Love counter woven into the orb: faded label curving around the body,
+         count glowing in the white core "heart". Hidden until count >= 1. -->
+    <div class="orb-love" id="orbLove" hidden aria-hidden="true">
+      <svg class="orb-love-ring" viewBox="0 0 100 100">
+        <defs>
+          <path id="orbLovePath" d="M 50,50 m -35,0 a 35,35 0 1,1 70,0 a 35,35 0 1,1 -70,0"/>
+        </defs>
+        <text>
+          <textPath href="#orbLovePath" startOffset="0">· number of people who loved it&nbsp;&nbsp;·&nbsp;&nbsp;number of people who loved it&nbsp;&nbsp;</textPath>
+        </text>
+      </svg>
+      <span class="orb-love-num" id="orbLoveNum">0</span>
+    </div>
+
     <div class="orb-hint" id="orbHint" aria-hidden="true">tap to begin</div>
   </div>
 
@@ -614,11 +648,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </a>
     <span class="hero-fineprint">No account to try it · private · free to start</span>
-  </div>
-
-  <div class="love-counter" id="loveCounter" hidden>
-    <svg class="love-heart" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.9-10-9.6C.4 8 1.9 4.5 5.2 4.5c2 0 3.4 1.2 4.3 2.6.9-1.4 2.3-2.6 4.3-2.6 3.3 0 4.8 3.5 3.2 6.9C19.5 16.1 12 21 12 21z"/></svg>
-    <span class="love-text"><span class="love-num" id="loveNum">0</span> "I love you"s said to anvAI</span>
   </div>
 
   <div class="scroll-cue"><span>scroll</span><div class="line"></div></div>
@@ -962,13 +991,13 @@
 
   /* ---------- Love counter: fetch + animated count-up ---------- */
   (function(){
-    var el = document.getElementById("loveCounter");
-    var numEl = document.getElementById("loveNum");
+    var orb = document.getElementById("orbLove");
+    var orbNum = document.getElementById("orbLoveNum");
     var navBadge = document.getElementById("navLove");
     var navNum = document.getElementById("navLoveNum");
-    if(!el || !numEl) return;
 
     function countUp(node, target){
+      if(!node) return;
       var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if(reduceMotion){ node.textContent = target.toLocaleString(); return; }
       var duration = 1400, start = null;
@@ -989,12 +1018,14 @@
         var target = Math.max(0, parseInt(data.count, 10) || 0);
         if(target < 1) return; // don't advertise zero
 
-        // Hero counter
-        el.hidden = false;
-        // setTimeout (not rAF) so the reveal still fires when the tab is
-        // backgrounded, where requestAnimationFrame is paused.
-        setTimeout(function(){ el.classList.add("in"); }, 30);
-        countUp(numEl, target);
+        // Woven into the orb: count in the core, label ringing the body
+        if(orb && orbNum){
+          orb.hidden = false;
+          // setTimeout (not rAF) so the reveal still fires when the tab is
+          // backgrounded, where requestAnimationFrame is paused.
+          setTimeout(function(){ orb.classList.add("in"); }, 30);
+          countUp(orbNum, target);
+        }
 
         // Compact nav badge (desktop) — always above the fold
         if(navBadge && navNum){
