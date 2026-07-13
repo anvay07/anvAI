@@ -199,7 +199,9 @@ body {
   border-top: 1px solid var(--ink-border);
 }
 
-.sidebar-account.hidden { display: none; }
+.sidebar-account.hidden,
+.account-signed-in.hidden,
+.account-signed-out.hidden { display: none; }
 
 .account-signed-out { display: flex; justify-content: center; }
 

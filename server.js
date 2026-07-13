@@ -142,6 +142,9 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: false, // Three.js WebGL needs this off
+    // Default COOP (same-origin) severs window.opener between the page and
+    // Google's sign-in popup, leaving it blank — allow-popups keeps the link.
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     hsts: IS_PROD ? { maxAge: 31536000, includeSubDomains: true } : false,
   })
 );
