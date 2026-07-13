@@ -36,11 +36,168 @@ body {
   to   { opacity: 1; }
 }
 
+.app-shell {
+  display: flex;
+  height: 100vh;
+}
+
 .container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  flex: 1;
+  min-width: 0;
 }
+
+/* ============================================
+   Sidebar — search / new session / recent chats
+   ============================================ */
+
+.sidebar {
+  width: 272px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 0.85rem;
+  background: var(--ink-soft);
+  border-right: 1px solid var(--ink-border);
+  overflow: hidden;
+}
+
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ink-card);
+  border: 1px solid var(--ink-border);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  flex-shrink: 0;
+}
+
+.sidebar-search-icon { color: var(--rose-grey); flex-shrink: 0; }
+
+.sidebar-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--cream);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.88em;
+}
+
+.sidebar-search-input::placeholder { color: var(--rose-grey); }
+
+.sidebar-new-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: var(--terracotta);
+  color: var(--ink);
+  border: none;
+  border-radius: 12px;
+  font-family: 'Sora', sans-serif;
+  font-weight: 600;
+  font-size: 0.88em;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.sidebar-new-btn:hover { background: var(--blush); }
+
+.sidebar-section-label {
+  color: var(--rose-grey);
+  font-size: 0.72em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.4rem 0;
+  flex-shrink: 0;
+}
+
+.recent-sessions-list {
+  list-style: none;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.recent-sessions-list::-webkit-scrollbar { width: 4px; }
+.recent-sessions-list::-webkit-scrollbar-track { background: transparent; }
+.recent-sessions-list::-webkit-scrollbar-thumb { background: var(--ink-card); border-radius: 4px; }
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.session-item:hover { background: var(--ink-card); }
+.session-item.active { background: var(--ink-card); }
+.session-item.active .session-item-title { color: var(--cream); }
+
+.session-item-main { flex: 1; min-width: 0; }
+
+.session-item-title {
+  color: var(--rose-grey);
+  font-size: 0.87em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-item-time {
+  color: var(--rose-grey);
+  opacity: 0.6;
+  font-size: 0.72em;
+  margin-top: 0.1rem;
+}
+
+.session-item-delete {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  background: transparent;
+  color: var(--rose-grey);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.session-item:hover .session-item-delete { opacity: 1; }
+.session-item-delete:hover { background: rgba(221,122,87,0.18); color: var(--terracotta); }
+
+.session-empty {
+  color: var(--rose-grey);
+  opacity: 0.6;
+  font-size: 0.85em;
+  padding: 0.6rem 0.4rem;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+.sidebar-toggle-btn { display: none; }
 
 /* ============================================
    Header
@@ -54,6 +211,7 @@ body {
   border-bottom: 1px solid var(--ink-border);
   flex-shrink: 0;
   background: var(--ink);
+  gap: 0.5rem;
 }
 
 .logo {
@@ -464,4 +622,34 @@ body {
   .icon-btn { width: 2.75rem; height: 2.75rem; }
   .send-btn  { width: 2.75rem; height: 2.75rem; }
   .input-field { font-size: 1rem; } /* prevent iOS zoom on focus */
+}
+
+/* ============================================
+   Sidebar — off-canvas drawer on mobile/tablet
+   ============================================ */
+
+@media (max-width: 860px) {
+  .sidebar-toggle-btn { display: flex; }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 30;
+    width: min(280px, 82vw);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 8px 0 24px rgba(0,0,0,0.35);
+  }
+
+  .sidebar.open { transform: translateX(0); }
+
+  .sidebar-backdrop.open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 20;
+  }
 }

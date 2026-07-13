@@ -9,6 +9,46 @@ const AVATAR_SVG = `<svg width="34" height="34" viewBox="-2 -2 44 44" xmlns="htt
   <circle cx="21" cy="15.5" r="1.5" fill="#6B3A54"/>
 </svg>`;
 
+// ============================================
+// Local session store — per-session message cache + recent-chats index.
+// anvAI has no accounts, so "recent chats" live in this browser's
+// localStorage rather than a server-side database.
+// ============================================
+const STORAGE_PREFIX = "anvai:";
+const INDEX_KEY = STORAGE_PREFIX + "index";
+const ACTIVE_KEY = STORAGE_PREFIX + "active";
+const MAX_STORED_SESSIONS = 30;
+const MAX_CACHED_MESSAGES = 100;
+
+function msgsKey(id) {
+  return STORAGE_PREFIX + "msgs:" + id;
+}
+
+const storage = {
+  get(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      // localStorage unavailable (private browsing / quota) — degrade silently
+    }
+  },
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      // ignore
+    }
+  },
+};
+
 class anvAIClient {
   constructor() {
     this.sessionId = null;
@@ -30,6 +70,12 @@ class anvAIClient {
       sessionId: document.getElementById("sessionId"),
       newSessionBtn: document.getElementById("newSessionBtn"),
       downloadBtn: document.getElementById("downloadBtn"),
+      sidebar: document.getElementById("sidebar"),
+      sidebarBackdrop: document.getElementById("sidebarBackdrop"),
+      sidebarToggleBtn: document.getElementById("sidebarToggleBtn"),
+      sidebarNewSessionBtn: document.getElementById("sidebarNewSessionBtn"),
+      searchChatsInput: document.getElementById("searchChatsInput"),
+      recentSessionsList: document.getElementById("recentSessionsList"),
     };
 
     this.init();
@@ -39,11 +85,22 @@ class anvAIClient {
   async init() {
     console.log("🧠 anvAI Initializing...");
 
-    // Start new session
-    await this.startNewSession();
-
     // Setup event listeners
     this.setupEventListeners();
+
+    // Resume the last active session if one exists, otherwise fall back to
+    // the most recently used session, otherwise start fresh.
+    const activeId = storage.get(ACTIVE_KEY, null);
+    const index = this.loadIndex();
+
+    if (activeId && index.some((s) => s.id === activeId)) {
+      this.resumeSession(activeId);
+    } else if (index.length) {
+      const mostRecent = [...index].sort((a, b) => b.updatedAt - a.updatedAt)[0];
+      this.resumeSession(mostRecent.id);
+    } else {
+      await this.startNewSession();
+    }
   }
 
   // Setup all event listeners
@@ -62,6 +119,224 @@ class anvAIClient {
     this.elements.downloadBtn.addEventListener("click", () =>
       this.downloadTranscript()
     );
+
+    this.elements.sidebarNewSessionBtn.addEventListener("click", () =>
+      this.startNewSession()
+    );
+    this.elements.searchChatsInput.addEventListener("input", () =>
+      this.renderSessionList()
+    );
+    this.elements.sidebarToggleBtn.addEventListener("click", () =>
+      this.toggleSidebar()
+    );
+    this.elements.sidebarBackdrop.addEventListener("click", () =>
+      this.closeSidebarMobile()
+    );
+  }
+
+  // ============================================
+  // Session store — recent-chats index (localStorage)
+  // ============================================
+
+  loadIndex() {
+    return storage.get(INDEX_KEY, []);
+  }
+
+  saveIndex(index) {
+    storage.set(INDEX_KEY, index);
+  }
+
+  getCache(id) {
+    return storage.get(msgsKey(id), []);
+  }
+
+  saveCache(id, messages) {
+    const trimmed =
+      messages.length > MAX_CACHED_MESSAGES
+        ? messages.slice(-MAX_CACHED_MESSAGES)
+        : messages;
+    storage.set(msgsKey(id), trimmed);
+  }
+
+  addIndexEntry(entry) {
+    const index = this.loadIndex();
+    index.unshift(entry);
+    if (index.length > MAX_STORED_SESSIONS) {
+      const overflow = index.splice(MAX_STORED_SESSIONS);
+      overflow.forEach((s) => storage.remove(msgsKey(s.id)));
+    }
+    this.saveIndex(index);
+  }
+
+  updateIndexEntry(id, patch) {
+    const index = this.loadIndex();
+    const i = index.findIndex((s) => s.id === id);
+    if (i === -1) return;
+    index[i] = { ...index[i], ...patch };
+    this.saveIndex(index);
+  }
+
+  setActiveSession(id) {
+    storage.set(ACTIVE_KEY, id);
+  }
+
+  // Cache a real conversation turn and refresh its session's sidebar entry
+  cachePush(role, content, metadata) {
+    if (!this.sessionId) return;
+    const cache = this.getCache(this.sessionId);
+    cache.push({ role, content, metadata: metadata || null, ts: Date.now() });
+    this.saveCache(this.sessionId, cache);
+
+    const index = this.loadIndex();
+    const entry = index.find((s) => s.id === this.sessionId);
+    if (entry) {
+      const patch = { updatedAt: Date.now(), preview: this.deriveTitle(content) };
+      if (role === "user" && (!entry.title || entry.title === "New chat")) {
+        patch.title = this.deriveTitle(content);
+      }
+      this.updateIndexEntry(this.sessionId, patch);
+    }
+    this.renderSessionList();
+  }
+
+  deriveTitle(text) {
+    const clean = text.replace(/\s+/g, " ").trim();
+    if (clean.length <= 42) return clean || "New chat";
+    const truncated = clean.slice(0, 42);
+    const lastSpace = truncated.lastIndexOf(" ");
+    return (lastSpace > 20 ? truncated.slice(0, lastSpace) : truncated) + "…";
+  }
+
+  formatRelativeTime(ts) {
+    const diffMs = Date.now() - ts;
+    const min = Math.floor(diffMs / 60000);
+    if (min < 1) return "just now";
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    const day = Math.floor(hr / 24);
+    if (day < 7) return `${day}d ago`;
+    return new Date(ts).toLocaleDateString();
+  }
+
+  // Render the recent-sessions list, applying the search box filter
+  renderSessionList() {
+    const query = (this.elements.searchChatsInput.value || "").trim().toLowerCase();
+    let index = [...this.loadIndex()].sort((a, b) => b.updatedAt - a.updatedAt);
+
+    if (query) {
+      index = index.filter(
+        (s) =>
+          (s.title || "").toLowerCase().includes(query) ||
+          (s.preview || "").toLowerCase().includes(query)
+      );
+    }
+
+    const list = this.elements.recentSessionsList;
+    list.innerHTML = "";
+
+    if (!index.length) {
+      const li = document.createElement("li");
+      li.className = "session-empty";
+      li.textContent = query ? "No matching chats." : "No sessions yet.";
+      list.appendChild(li);
+      return;
+    }
+
+    index.forEach((s) => {
+      const li = document.createElement("li");
+      li.className = "session-item" + (s.id === this.sessionId ? " active" : "");
+      li.setAttribute("role", "button");
+      li.tabIndex = 0;
+
+      const main = document.createElement("div");
+      main.className = "session-item-main";
+
+      const title = document.createElement("div");
+      title.className = "session-item-title";
+      title.textContent = s.title || "New chat";
+
+      const time = document.createElement("div");
+      time.className = "session-item-time";
+      time.textContent = this.formatRelativeTime(s.updatedAt);
+
+      main.appendChild(title);
+      main.appendChild(time);
+
+      const del = document.createElement("button");
+      del.className = "session-item-delete";
+      del.setAttribute("aria-label", "Delete session");
+      del.title = "Delete";
+      del.innerHTML =
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.deleteSession(s.id);
+      });
+
+      li.appendChild(main);
+      li.appendChild(del);
+
+      li.addEventListener("click", () => this.resumeSession(s.id));
+      li.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          this.resumeSession(s.id);
+        }
+      });
+
+      list.appendChild(li);
+    });
+  }
+
+  // Switch the active session and repopulate the transcript from its cache
+  resumeSession(id) {
+    if (!id) return;
+
+    this.sessionId = id;
+    this.elements.sessionId.textContent = `Session: ${id.slice(-6)}`;
+    this.clearMessages();
+    this.hideEmotionalState();
+    this.hideCrisisAlert();
+
+    const cached = this.getCache(id);
+    if (cached.length) {
+      cached.forEach((m) => this.addMessage(m.content, m.role, m.metadata));
+    } else {
+      this.addMessage("Hey. I'm here — what's on your mind?", "assistant", null);
+    }
+
+    this.setActiveSession(id);
+    this.closeSidebarMobile();
+    this.renderSessionList();
+    this.elements.userInput.focus();
+  }
+
+  deleteSession(id) {
+    const index = this.loadIndex().filter((s) => s.id !== id);
+    this.saveIndex(index);
+    storage.remove(msgsKey(id));
+
+    if (id === this.sessionId) {
+      if (index.length) {
+        const mostRecent = [...index].sort((a, b) => b.updatedAt - a.updatedAt)[0];
+        this.resumeSession(mostRecent.id);
+      } else {
+        this.startNewSession();
+      }
+    } else {
+      this.renderSessionList();
+    }
+  }
+
+  toggleSidebar() {
+    this.elements.sidebar.classList.toggle("open");
+    this.elements.sidebarBackdrop.classList.toggle("open");
+  }
+
+  closeSidebarMobile() {
+    this.elements.sidebar.classList.remove("open");
+    this.elements.sidebarBackdrop.classList.remove("open");
   }
 
   // Start a new conversation session
@@ -83,12 +358,27 @@ class anvAIClient {
 
       console.log(`✅ New session started: ${this.sessionId}`);
 
+      // Register it in the recent-chats index and seed its cache
+      const now = Date.now();
+      this.addIndexEntry({
+        id: this.sessionId,
+        title: "New chat",
+        preview: "",
+        createdAt: now,
+        updatedAt: now,
+      });
+      this.setActiveSession(this.sessionId);
+
       // Show welcome message
       this.addMessage(
         data.message,
         "assistant",
         null
       );
+      this.cachePush("assistant", data.message, null);
+
+      this.closeSidebarMobile();
+      this.renderSessionList();
     } catch (error) {
       console.error("Error starting session:", error);
       this.showError("Failed to start new session. Please refresh the page.");
@@ -116,6 +406,7 @@ class anvAIClient {
 
     // Add user message to display
     this.addMessage(userMessage, "user", null);
+    this.cachePush("user", userMessage, null);
 
     // Show typing indicator
     const typingId = this.addTypingIndicator();
@@ -146,15 +437,14 @@ class anvAIClient {
       // Check for crisis
       if (data.isCrisis) {
         this.showCrisisAlert(data);
-        this.addMessage(data.response, "assistant", {
-          isCrisis: true,
-          severity: data.severity,
-        });
+        const crisisMeta = { isCrisis: true, severity: data.severity };
+        this.addMessage(data.response, "assistant", crisisMeta);
+        this.cachePush("assistant", data.response, crisisMeta);
       } else {
         // Add agent response
-        this.addMessage(data.response, "assistant", {
-          emotionalState: data.emotionalState,
-        });
+        const meta = { emotionalState: data.emotionalState };
+        this.addMessage(data.response, "assistant", meta);
+        this.cachePush("assistant", data.response, meta);
 
         // Update emotional state display
         if (data.emotionalState) {

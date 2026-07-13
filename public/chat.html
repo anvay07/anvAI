@@ -13,9 +13,32 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="app-shell">
+      <!-- Sidebar: search + new session + recent chats -->
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-search">
+          <svg class="sidebar-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="searchChatsInput" class="sidebar-search-input" type="text" placeholder="Search chat" aria-label="Search chats" autocomplete="off" />
+        </div>
+
+        <button id="sidebarNewSessionBtn" class="sidebar-new-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New session
+        </button>
+
+        <div class="sidebar-section-label">Recent</div>
+        <ul id="recentSessionsList" class="recent-sessions-list" aria-label="Recent sessions"></ul>
+      </aside>
+
+      <!-- Backdrop for mobile sidebar overlay -->
+      <div id="sidebarBackdrop" class="sidebar-backdrop hidden"></div>
+
     <div class="container">
       <!-- Header -->
       <header class="header">
+        <button id="sidebarToggleBtn" class="icon-btn sidebar-toggle-btn" title="Toggle sessions" aria-label="Toggle sessions">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <a href="index.html" class="logo" aria-label="Back to anvAI home" style="text-decoration:none;">
           <svg class="logo-icon" width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
             <rect width="200" height="200" rx="40" fill="#F5E6DC"/>
@@ -97,6 +120,7 @@
           </div>
         </div>
       </main>
+    </div>
     </div>
 
     <!-- Screen-reader status announcer (invisible) -->
