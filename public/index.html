@@ -437,11 +437,90 @@
     font-size:12px; color:var(--rose-grey); opacity:0.6;
   }
 
+  /* ---------- START MODAL (sign in / anonymous) ---------- */
+  .start-modal-backdrop{
+    position:fixed; inset:0; z-index:200;
+    background:rgba(28,15,23,0.72);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    opacity:0; pointer-events:none;
+    transition:opacity .3s ease;
+  }
+  .start-modal-backdrop.open{ opacity:1; pointer-events:auto; }
+  .start-modal{
+    position:relative;
+    width:min(400px, 100%);
+    background:var(--ink-card);
+    border:1px solid var(--line);
+    border-radius:24px;
+    padding:38px 34px 30px;
+    text-align:center;
+    box-shadow:0 30px 80px rgba(0,0,0,0.5);
+    transform:translateY(14px) scale(0.98);
+    transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .start-modal-backdrop.open .start-modal{ transform:translateY(0) scale(1); }
+  .start-modal h3{
+    font-family:var(--font-display); font-weight:400;
+    font-size:24px; letter-spacing:-0.01em; margin-bottom:10px;
+  }
+  .start-modal h3 em{ font-style:italic; color:var(--blush); }
+  .start-modal .sm-sub{
+    color:var(--rose-grey); font-size:14px; line-height:1.65;
+    margin-bottom:26px;
+  }
+  .sm-close{
+    position:absolute; top:16px; right:16px; width:26px; height:26px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--rose-grey); cursor:pointer; border-radius:50%;
+    background:none; border:none; padding:0;
+    transition:background .2s ease, color .2s ease;
+  }
+  .sm-close:hover{ background:var(--ink-soft); color:var(--cream); }
+
+  .sm-gsi-wrap{
+    position:relative; width:100%;
+    border-radius:100px; overflow:hidden;
+    margin-bottom:12px;
+  }
+  .sm-google-btn{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:15px 24px;
+    background:var(--terracotta); color:var(--ink);
+    border:none; border-radius:100px;
+    font-family:var(--font-body); font-size:15px; font-weight:500;
+    cursor:pointer;
+    transition:background .25s ease;
+  }
+  .sm-gsi-wrap:hover .sm-google-btn{ background:var(--blush); }
+  .sm-gsi-overlay{
+    position:absolute; inset:0; opacity:0.001;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .sm-anon-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:100%; padding:14px 24px;
+    background:transparent; color:var(--cream);
+    border:1px solid var(--line); border-radius:100px;
+    font-family:var(--font-body); font-size:14.5px; font-weight:400;
+    cursor:pointer;
+    transition:border-color .25s ease, background .25s ease;
+  }
+  .sm-anon-btn:hover{ border-color:rgba(221,122,87,0.45); background:rgba(221,122,87,0.06); }
+  .sm-fineprint{
+    margin-top:18px;
+    font-size:11.5px; color:var(--rose-grey); opacity:0.75; line-height:1.6;
+  }
+
   @media (max-width:520px){
     .vignettes{ padding:90px 0 30px; }
     .grounding{ padding:80px 0; }
     .closing{ padding:100px 24px 120px; }
     .helplines{ padding:70px 24px 60px; }
+    .start-modal{ padding:32px 24px 26px; }
   }
 </style>
 </head>
@@ -757,7 +836,118 @@
   </div>
 </div>
 
+<!-- Start modal: choose Google sign-in or anonymous -->
+<div class="start-modal-backdrop" id="startModalBackdrop" aria-hidden="true">
+  <div class="start-modal" role="dialog" aria-modal="true" aria-labelledby="startModalTitle">
+    <button class="sm-close" id="startModalClose" aria-label="Close">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <h3 id="startModalTitle">How would you like to <em>begin?</em></h3>
+    <p class="sm-sub">Sign in to keep your conversations safe across devices — or stay anonymous, nothing leaves this browser.</p>
+
+    <div class="sm-gsi-wrap" id="smGsiWrap">
+      <button type="button" class="sm-google-btn" tabindex="-1" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#1C0F17" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" opacity="0.9"/><path fill="#1C0F17" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" opacity="0.75"/><path fill="#1C0F17" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" opacity="0.6"/><path fill="#1C0F17" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" opacity="0.85"/></svg>
+        Continue with Google
+      </button>
+      <div id="smGoogleBtn" class="sm-gsi-overlay"></div>
+    </div>
+
+    <button type="button" class="sm-anon-btn" id="smAnonBtn">Continue anonymously</button>
+
+    <p class="sm-fineprint">Anonymous chats stay on this device only and are limited to 3 sessions.</p>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var backdrop = document.getElementById("startModalBackdrop");
+  var closeBtn = document.getElementById("startModalClose");
+  var anonBtn  = document.getElementById("smAnonBtn");
+  var gsiWrap  = document.getElementById("smGsiWrap");
+
+  var authEnabled = false;
+  var gsiReady = false;
+
+  function goToChat(){ window.location.href = "chat.html"; }
+
+  function openModal(){
+    // Nothing to choose when sign-in isn't available — go straight in
+    if(!authEnabled){ goToChat(); return; }
+    backdrop.classList.add("open");
+    backdrop.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+  function closeModal(){
+    backdrop.classList.remove("open");
+    backdrop.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  window.openStartModal = openModal;
+
+  closeBtn.addEventListener("click", closeModal);
+  backdrop.addEventListener("click", function(e){ if(e.target === backdrop) closeModal(); });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && backdrop.classList.contains("open")) closeModal();
+  });
+  anonBtn.addEventListener("click", goToChat);
+
+  // Every "Start talking" CTA opens the modal instead of navigating directly
+  document.querySelectorAll('a[href="chat.html"]').forEach(function(a){
+    a.addEventListener("click", function(e){
+      if(!authEnabled) return; // plain navigation when sign-in unavailable
+      e.preventDefault();
+      openModal();
+    });
+  });
+
+  function whenGisLoaded(cb, tries){
+    tries = tries || 0;
+    if(window.google && window.google.accounts && window.google.accounts.id) return cb();
+    if(tries > 80) return; // ~8s — give up quietly, links fall back to plain nav
+    setTimeout(function(){ whenGisLoaded(cb, tries + 1); }, 100);
+  }
+
+  fetch("/api/auth/config")
+    .then(function(r){ return r.json(); })
+    .then(function(cfg){
+      if(!cfg.enabled || !cfg.googleClientId) return;
+      // Already signed in? CTAs can go straight to chat.
+      return fetch("/api/auth/me", { credentials: "same-origin" })
+        .then(function(me){
+          if(me.ok) return; // signed in — leave links as plain navigation
+          whenGisLoaded(function(){
+            window.google.accounts.id.initialize({
+              client_id: cfg.googleClientId,
+              callback: function(response){
+                fetch("/api/auth/google", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "same-origin",
+                  body: JSON.stringify({ idToken: response.credential })
+                })
+                .then(function(r){ if(!r.ok) throw new Error("sign-in failed"); goToChat(); })
+                .catch(function(){ goToChat(); });
+              },
+              auto_select: false
+            });
+            window.google.accounts.id.renderButton(document.getElementById("smGoogleBtn"), {
+              theme: "filled_black", size: "large", shape: "pill",
+              text: "continue_with", width: 320
+            });
+            gsiReady = true;
+            authEnabled = true; // modal only useful once the button can render
+          });
+        });
+    })
+    .catch(function(){ /* config unreachable — CTAs stay plain links */ });
+})();
+</script>
 <script>
 (function(){
   "use strict";
@@ -1007,7 +1197,10 @@
       raycaster.setFromCamera(mouse, camera);
       /* hit-test against the full orb mesh, not just the dot */
       var hits = raycaster.intersectObject(mesh);
-      if(hits.length > 0) window.location.href = "chat.html";
+      if(hits.length > 0){
+        if(window.openStartModal) window.openStartModal();
+        else window.location.href = "chat.html";
+      }
     });
 
     canvas.addEventListener("mousemove", function(e){

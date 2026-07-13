@@ -19,6 +19,9 @@ const INDEX_KEY = STORAGE_PREFIX + "index";
 const ACTIVE_KEY = STORAGE_PREFIX + "active";
 const MAX_STORED_SESSIONS = 30;
 const MAX_CACHED_MESSAGES = 100;
+// Anonymous users are capped at this many sessions (credits/storage/tokens);
+// signing in lifts the limit. Enforced client-side at session creation.
+const ANON_SESSION_LIMIT = 3;
 
 function msgsKey(id) {
   return STORAGE_PREFIX + "msgs:" + id;
@@ -218,12 +221,14 @@ class anvAIClient {
         callback: (response) => this.handleGoogleCredential(response),
         auto_select: false,
       });
+      // Rendered invisibly over the custom-styled .google-btn — size it to
+      // cover the whole click target.
       google.accounts.id.renderButton(this.elements.googleSignInBtn, {
         theme: "filled_black",
-        size: "medium",
-        shape: "pill",
-        text: "signin",
-        width: 220,
+        size: "large",
+        shape: "rectangular",
+        text: "continue_with",
+        width: 240,
       });
     } catch (error) {
       console.error("Google Identity Services failed to load:", error);
@@ -564,6 +569,18 @@ class anvAIClient {
 
   // Start a new conversation session
   async startNewSession() {
+    // Anonymous mode is capped — sign in for unlimited sessions
+    if (!this.user && this.loadIndex().length >= ANON_SESSION_LIMIT) {
+      this.closeSidebarMobile();
+      this.showNotice(
+        `Anonymous mode is limited to ${ANON_SESSION_LIMIT} sessions. ` +
+        (this.authEnabled
+          ? "Sign in with Google (bottom of the sidebar) for unlimited sessions, or delete an old chat to make room."
+          : "Delete an old chat to make room.")
+      );
+      return;
+    }
+
     try {
       const response = await fetch(`${this.apiUrl}/session/new`, {
         method: "POST",
@@ -862,6 +879,19 @@ class anvAIClient {
 
     errorDiv.appendChild(p);
     this.elements.messagesContainer.appendChild(errorDiv);
+    this.scrollToBottom();
+  }
+
+  // Softer, non-error notice (e.g. anonymous session limit)
+  showNotice(message) {
+    const noticeDiv = document.createElement("div");
+    noticeDiv.className = "message-group notice-message";
+
+    const p = document.createElement("p");
+    p.textContent = message;
+
+    noticeDiv.appendChild(p);
+    this.elements.messagesContainer.appendChild(noticeDiv);
     this.scrollToBottom();
   }
 
