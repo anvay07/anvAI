@@ -128,7 +128,12 @@
     display:inline-block;
   }
   .nav-cta:hover{ background:var(--blush); }
-  @media (max-width:720px){ .nav-links{ display:none; } nav{ padding:20px 24px; } }
+  @media (max-width:720px){
+    .nav-links{ display:none; }
+    nav{ padding:20px 24px; }
+    /* svh tracks the *visible* viewport on phones (URL bar collapses) */
+    .hero{ min-height:100svh; }
+  }
 
   /* ---------- HAMBURGER ---------- */
   .nav-hamburger{
@@ -333,6 +338,9 @@
   .v-title{ font-family:var(--font-display); font-size:26px; font-weight:400; margin-bottom:14px; letter-spacing:-0.005em; }
   .v-body{ color:var(--rose-grey); font-size:15.5px; max-width:52ch; line-height:1.75; }
   @media (max-width:820px){
+    /* restore side padding lost to the .vignettes/.grounding shorthand overriding .wrap
+       (.wrap doubled for specificity — the base .grounding rule appears later in source) */
+    .vignettes.wrap, .grounding.wrap{ padding-left:24px; padding-right:24px; }
     .vignette{ grid-template-columns:1fr; gap:22px; direction:ltr !important; text-align:left; }
     .vignette > *{ direction:ltr !important; }
     .v-mark{ justify-content:flex-start; }
@@ -564,8 +572,17 @@
   }
 
   @media (max-width:520px){
-    .vignettes{ padding:90px 0 30px; }
-    .grounding{ padding:80px 0; }
+    .hero{ padding:96px 20px 84px; }
+    .orb-stage{ width:min(300px, 58vw); height:min(300px, 58vw); }
+    .hero-sub{ margin-top:20px; font-size:16px; }
+    .hero-actions{ margin-top:30px; }
+    /* vertical-only so the 24px side padding from the 820px query survives */
+    .vignettes{ padding-top:90px; padding-bottom:30px; }
+    .section-head{ margin-bottom:48px; }
+    .vignette{ padding:40px 0; }
+    .grounding{ padding-top:80px; padding-bottom:80px; }
+    .lineage-list li{ flex-direction:column; align-items:flex-start; gap:3px; }
+    .lineage-list .li-name{ min-width:0; }
     .closing{ padding:100px 24px 120px; }
     .helplines{ padding:70px 24px 60px; }
     .start-modal{ padding:32px 24px 26px; }

@@ -39,6 +39,9 @@ body {
 .app-shell {
   display: flex;
   height: 100vh;
+  /* dvh = vh on desktop; on phones it shrinks with the URL bar / keyboard
+     so the input row is never hidden behind browser chrome */
+  height: 100dvh;
 }
 
 .container {
@@ -302,7 +305,8 @@ body {
   display: none;
 }
 
-.sidebar-toggle-btn { display: none; }
+/* doubled class beats the later .icon-btn{display:flex} rule */
+.icon-btn.sidebar-toggle-btn { display: none; }
 
 /* ============================================
    Header
@@ -838,7 +842,7 @@ body {
 @media (max-width: 600px) {
   .message { max-width: 95%; }
   .header  { padding: 0.6rem 1rem; }
-  .messages { padding: 1.25rem 1rem 0.75rem; }
+  .messages { padding: 1.25rem 1rem 0.75rem; gap: 1.25rem; }
   .input-section {
     padding: 0.5rem 1rem 1rem;
     padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
@@ -847,6 +851,12 @@ body {
   .icon-btn { width: 2.75rem; height: 2.75rem; }
   .send-btn  { width: 2.75rem; height: 2.75rem; }
   .input-field { font-size: 1rem; } /* prevent iOS zoom on focus */
+  /* Smaller avatar frees width for the bubble text */
+  .message-avatar { width: 28px; height: 28px; min-width: 28px; }
+  .message-avatar svg { width: 28px; height: 28px; }
+  .msg-reply-btn { left: 3rem; }
+  /* Keep message scrolling from triggering pull-to-refresh / body scroll */
+  .chat-container { overscroll-behavior-y: contain; }
 }
 
 /* ============================================
@@ -854,7 +864,7 @@ body {
    ============================================ */
 
 @media (max-width: 860px) {
-  .sidebar-toggle-btn { display: flex; }
+  .icon-btn.sidebar-toggle-btn { display: flex; }
 
   .sidebar {
     position: fixed;
